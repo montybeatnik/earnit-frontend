@@ -46,6 +46,7 @@ export default function ParentDashboard() {
     navigation.navigate('Login');
   };
 
+  console.log('Rendering ParentDashboard');
   return (
     <View style={styles.container}>
       <Text style={styles.title}>👩‍👧 Parent Dashboard</Text>
@@ -92,8 +93,11 @@ export default function ParentDashboard() {
 
 
       <Button title="Assign New Task" onPress={() => navigation.navigate('CreateTask')} />
-
-      <View style={{ marginVertical: 20 }} />
+      <View style={{ marginVertical: 10 }} />
+      <Button
+        title="Manage Rewards"
+        onPress={() => navigation.navigate('Rewards')}
+      />
       <Button title="Log Out" onPress={handleLogout} color="red" />
     </View>
   );

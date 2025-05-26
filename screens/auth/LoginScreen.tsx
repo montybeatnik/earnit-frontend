@@ -24,7 +24,10 @@ export default function LoginScreen() {
       if (role === 'parent') {
         navigation.navigate('Parent');
       } else {
-        navigation.navigate('ChildDashboard');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Child' }],
+        });
       }
     } catch (err: any) {
       console.error('Login error:', err);

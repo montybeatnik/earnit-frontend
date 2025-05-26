@@ -110,6 +110,7 @@ export default function ChildDashboard() {
         ListEmptyComponent={<Text style={{ textAlign: 'center' }}>No completed tasks yet</Text>}
       />
 
+      <Button title="Reward Shop" onPress={() => navigation.navigate('RewardShop')} />
 
       <Button title="Log Out" onPress={handleLogout} color="red" />
     </View>

@@ -16,7 +16,7 @@ export default function AuthLoadingScreen() {
           const role = decoded.role;
           navigation.reset({
             index: 0,
-            routes: [{ name: role === 'parent' ? 'Parent' : 'ChildDashboard' }],
+            routes: [{ name: role === 'parent' ? 'Parent' : 'Child' }],
           });
         } catch (e) {
           await AsyncStorage.removeItem('token');
