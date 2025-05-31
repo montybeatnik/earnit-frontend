@@ -9,12 +9,14 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 import { api } from '../../services/api';
 
 export default function RewardShopScreen() {
     const [rewards, setRewards] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const navigation = useNavigation<any>();
 
     const fetchRewards = async () => {
         try {
@@ -32,14 +34,19 @@ export default function RewardShopScreen() {
         }
     };
 
-    const handleRedeem = async (rewardId: number) => {
+    const handleRedeem = async (reward: any) => {
         try {
             const token = await AsyncStorage.getItem('token');
-            const res = await api.post(`/rewards/${rewardId}/redeem`, null, {
+            const res = await api.post(`/rewards/${reward.id}/redeem`, null, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            Alert.alert('🎉 Redeemed!', 'Reward requested successfully!');
-            fetchRewards();
+
+            if (reward.type === 'screen_time') {
+                navigation.navigate('ScreenTimeEarned', { reward });
+            } else {
+                Alert.alert('🎉 Redeemed!', 'Reward requested successfully!');
+                fetchRewards();
+            }
         } catch (err: any) {
             console.error(err);
             Alert.alert('Oops', err.response?.data?.error || 'Redemption failed');
@@ -66,7 +73,7 @@ export default function RewardShopScreen() {
                         <Text style={styles.rewardTitle}>{item.title}</Text>
                         <Text>{item.description}</Text>
                         <Text style={styles.cost}>Cost: {item.cost} pts</Text>
-                        <Button title="Redeem" onPress={() => handleRedeem(item.id)} />
+                        <Button title="Redeem" onPress={() => handleRedeem(item)} />
                     </View>
                 )}
             />

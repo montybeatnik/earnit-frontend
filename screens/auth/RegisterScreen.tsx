@@ -1,20 +1,29 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
-import { api } from '../../services/api'; // make sure this matches your path
-import { useNavigation } from '@react-navigation/native';
+import { api } from '../../services/api';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 export default function RegisterScreen() {
   const navigation = useNavigation<any>();
+  const route = useRoute();
+  const passedEmail = route.params?.email || '';
+  const [email, setEmail] = useState(passedEmail);
 
   const [form, setForm] = useState({
     name: '',
-    email: '',
+    email: passedEmail,
     password: '',
     role: 'parent',
     parent_id: '',
   });
+
+  useEffect(() => {
+    if (passedEmail) {
+      setForm((prev) => ({ ...prev, email: passedEmail }));
+    }
+  }, [passedEmail]);
 
   const handleChange = (key: string, value: string) => {
     setForm({ ...form, [key]: value });
@@ -30,10 +39,13 @@ export default function RegisterScreen() {
       const token = res.data.token;
       await AsyncStorage.setItem('token', token);
       Alert.alert('Success', 'Account created!');
-      // TODO: Redirect to dashboard
-      console.log('JWT Payload:', payload);
+
       const role = payload.role;
-      navigation.navigate('ParentDashboard');
+      if (role === 'parent') {
+        navigation.navigate('Parent');
+      } else {
+        navigation.navigate('Child');
+      }
     } catch (err: any) {
       console.error(err);
       Alert.alert('Error', err.response?.data?.error || 'Registration failed');
@@ -48,10 +60,15 @@ export default function RegisterScreen() {
         onChangeText={(text) => handleChange('name', text)}
       />
       <TextInput
+        value={email}
+        onChangeText={(text) => {
+          setEmail(text);
+          handleChange('email', text);
+        }}
         placeholder="Email"
-        style={styles.input}
+        autoCapitalize="none"
         keyboardType="email-address"
-        onChangeText={(text) => handleChange('email', text)}
+        style={styles.input}
       />
       <TextInput
         placeholder="Password"

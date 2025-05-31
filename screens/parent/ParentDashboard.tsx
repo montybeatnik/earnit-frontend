@@ -3,20 +3,22 @@ import { View, Text, Button, StyleSheet, Alert, FlatList } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { api } from '../../services/api';
+import { theme } from '../../styles/theme';
+import StatusBadge from '../../components/StatusBadge';
 
 export default function ParentDashboard() {
   const navigation = useNavigation<any>();
   const [tasks, setTasks] = useState([]);
+  const [filter, setFilter] = useState<'pending' | 'approved'>('pending');
 
   const fetchTasks = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await api.get('/tasks', {
+      const res = await api.get(`/tasks?status=${filter}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      //   console.log(res.data.tasks) // here for debugging
       setTasks(res.data.tasks);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       Alert.alert('Failed to load tasks');
     }
@@ -29,16 +31,12 @@ export default function ParentDashboard() {
         headers: { Authorization: `Bearer ${token}` },
       });
       Alert.alert('Approved', 'Task has been approved!');
-      fetchTasks(); // refresh list
+      fetchTasks();
     } catch (err) {
       console.error(err);
       Alert.alert('Error approving task');
     }
   };
-
-  useEffect(() => {
-    fetchTasks();
-  }, []);
 
   const handleLogout = async () => {
     await AsyncStorage.removeItem('token');
@@ -46,80 +44,83 @@ export default function ParentDashboard() {
     navigation.navigate('Login');
   };
 
-  console.log('Rendering ParentDashboard');
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', fetchTasks);
+    return unsubscribe;
+  }, [navigation]);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [filter]);
+
   return (
-    <View style={styles.container}>
+    <View style={theme.container}>
       <Text style={styles.title}>👩‍👧 Parent Dashboard</Text>
 
+      <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 10 }}>
+        <Button
+          title="Current"
+          onPress={() => setFilter('pending')}
+          color={filter === 'pending' ? 'blue' : 'gray'}
+        />
+        <View style={{ width: 10 }} />
+        <Button
+          title="History"
+          onPress={() => setFilter('approved')}
+          color={filter === 'approved' ? 'blue' : 'gray'}
+        />
+      </View>
+
       <FlatList
-        data={tasks.filter(
-          (t) => t.status?.toLowerCase() === 'pending' || t.status?.toLowerCase() === 'awaiting_approval'
-        )}
+        data={tasks}
         keyExtractor={(item) => item.id.toString()}
+        ListEmptyComponent={
+          <Text style={{ textAlign: 'center' }}>
+            {filter === 'approved' ? 'No completed tasks yet' : 'No current tasks'}
+          </Text>
+        }
         renderItem={({ item }) => (
-          <View style={styles.taskCard}>
-            <Text style={styles.taskTitle}>{item.title}</Text>
-            <Text>{item.description}</Text>
-            <Text style={styles.points}>{item.points} pts</Text>
-            <Text>Status: {item.status}</Text>
-            {item.status?.toLowerCase() === 'awaiting_approval' && (
-              <Button
-                title="Approve Task"
-                onPress={() => handleApproveTask(item.id)}
-                color="green"
-              />
+          <View style={theme.card}>
+            <Text style={theme.title}>{item.title}</Text>
+            <Text style={theme.subtitle}>{item.description}</Text>
+            <Text style={theme.points}>🏆 {item.points} points</Text>
+            <StatusBadge status={item.status} />
+            <Text style={theme.timestamp}>
+              Created: {new Date(item.created_at).toLocaleDateString()} @ {new Date(item.created_at).toLocaleTimeString()}
+            </Text>
+            {filter === 'pending' && item.status?.toLowerCase() === 'awaiting_approval' && (
+              <View style={theme.buttonSpacing}>
+                <Button
+                  title="Approve Task"
+                  onPress={() => handleApproveTask(item.id)}
+                  color="green"
+                />
+              </View>
             )}
-
-          </View>
-
-        )}
-      />
-
-      <Text style={styles.subheader}>✅ Completed Tasks</Text>
-
-      <FlatList
-        data={tasks.filter((t) => t.status?.toLowerCase() === 'approved')}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.taskCard}>
-            <Text style={styles.taskTitle}>{item.title}</Text>
-            <Text>{item.description}</Text>
-            <Text style={styles.points}>{item.points} pts</Text>
-            <Text style={{ color: 'green' }}>Status: {item.status}</Text>
           </View>
         )}
-        ListEmptyComponent={<Text style={{ textAlign: 'center' }}>No completed tasks yet</Text>}
       />
 
+      <View style={theme.buttonSpacing}>
+        <Button title="Assign New Task" onPress={() => navigation.navigate('CreateTask')} />
+      </View>
 
-      <Button title="Assign New Task" onPress={() => navigation.navigate('CreateTask')} />
-      <View style={{ marginVertical: 10 }} />
-      <Button
-        title="Manage Rewards"
-        onPress={() => navigation.navigate('Rewards')}
-      />
-      <Button title="Log Out" onPress={handleLogout} color="red" />
+      <View style={theme.buttonSpacing}>
+        <Button title="Manage Rewards" onPress={() => navigation.navigate('Rewards')} />
+      </View>
+
+      <View style={theme.buttonSpacing}>
+        <Button title="Log Out" onPress={handleLogout} color="red" />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-  taskCard: {
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 6,
-    marginBottom: 10,
-  },
-  taskTitle: { fontWeight: 'bold', fontSize: 16 },
-  points: { fontStyle: 'italic', color: 'green' },
-  subheader: {
-    fontSize: 18,
+  title: {
+    fontSize: 24,
     fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
+    marginBottom: 20,
+    textAlign: 'center',
   },
-
 });
