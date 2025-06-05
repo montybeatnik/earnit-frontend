@@ -5,7 +5,6 @@ import {
     TextInput,
     Button,
     Alert,
-    StyleSheet,
     Switch,
     Keyboard,
     TouchableWithoutFeedback,
@@ -17,6 +16,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../../services/api';
 import { Picker } from '@react-native-picker/picker';
+import { themeStyles, typography } from '../../styles/theme';
 
 export default function CreateTaskScreen({ navigation }) {
     const [title, setTitle] = useState('');
@@ -42,7 +42,7 @@ export default function CreateTaskScreen({ navigation }) {
                 setTemplates(templateRes.data.templates);
             } catch (err) {
                 console.error(err);
-                Alert.alert('Error fetching data');
+                Alert.alert('Error', 'Unable to fetch templates or children');
             }
         };
 
@@ -51,35 +51,62 @@ export default function CreateTaskScreen({ navigation }) {
 
     useEffect(() => {
         if (useTemplate && selectedTemplateId) {
-            const template = templates.find((t) => t.id === selectedTemplateId);
+            const template = templates.find((t) => t.id === Number(selectedTemplateId));
             if (template) {
                 setTitle(template.title);
                 setDescription(template.description);
                 setPoints(template.points.toString());
             }
+        } else {
+            setTitle('');
+            setDescription('');
+            setPoints('');
         }
-    }, [selectedTemplateId]);
+    }, [selectedTemplateId, useTemplate]);
+
+    const isValid = () => {
+        if (!title.trim()) {
+            console.log('Validation failed: Title is empty');
+            Alert.alert('Validation Error', 'Title is required.');
+            return false;
+        }
+        const parsedPoints = parseInt(points, 10);
+        if (isNaN(parsedPoints) || parsedPoints <= 0) {
+            console.log('Validation failed: Invalid points', points);
+            Alert.alert('Validation Error', 'Points must be a positive number.');
+            return false;
+        }
+        if (!selectedChildId) {
+            console.log('Validation failed: No child selected');
+            Alert.alert('Validation Error', 'Please select a child to assign the task to.');
+            return false;
+        }
+        console.log('Validation passed');
+        return true;
+    };
 
     const handleCreate = async () => {
+        console.log('Create Task button pressed')
+        if (!isValid()) return;
+
         try {
             const token = await AsyncStorage.getItem('token');
-            await api.post(
-                '/tasks',
-                {
-                    title,
-                    description,
-                    points: parseInt(points),
-                    assigned_to_id: selectedChildId,
-                },
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
-            );
-            Alert.alert('Task Created!');
+            const payload = {
+                title: title.trim(),
+                description: description.trim(),
+                points: parseInt(points, 10),
+                assigned_to_id: Number(selectedChildId),
+            };
+
+            await api.post('/tasks', payload, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            Alert.alert('Success', 'Task Created!');
             navigation.goBack();
         } catch (err) {
-            console.error(err);
-            Alert.alert('Error creating task');
+            console.error('Task creation error:', err);
+            Alert.alert('Error', err.response?.data?.error || 'Failed to create task.');
         }
     };
 
@@ -90,12 +117,12 @@ export default function CreateTaskScreen({ navigation }) {
         >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <ScrollView
-                    contentContainerStyle={{ flexGrow: 1, padding: 20 }}
+                    contentContainerStyle={themeStyles.scrollContainer}
                     keyboardShouldPersistTaps="handled"
                 >
-                    <Text style={styles.title}>Assign Task</Text>
+                    <Text style={typography.title}>Assign Task</Text>
 
-                    <View style={styles.row}>
+                    <View style={themeStyles.row}>
                         <Text style={{ flex: 1 }}>Use Template</Text>
                         <Switch value={useTemplate} onValueChange={setUseTemplate} />
                     </View>
@@ -103,8 +130,8 @@ export default function CreateTaskScreen({ navigation }) {
                     {useTemplate ? (
                         <Picker
                             selectedValue={selectedTemplateId}
-                            onValueChange={(value) => setSelectedTemplateId(value)}
-                            style={styles.input}
+                            onValueChange={setSelectedTemplateId}
+                            style={themeStyles.input}
                         >
                             <Picker.Item label="Select a template" value={null} />
                             {templates.map((t) => (
@@ -114,73 +141,43 @@ export default function CreateTaskScreen({ navigation }) {
                     ) : (
                         <>
                             <TextInput
-                                placeholder="Task Title"
+                                placeholder="Task Title *"
                                 value={title}
                                 onChangeText={setTitle}
-                                style={styles.input}
+                                style={themeStyles.input}
                             />
                             <TextInput
                                 placeholder="Description"
                                 value={description}
                                 onChangeText={setDescription}
-                                style={styles.input}
+                                style={themeStyles.input}
                             />
                             <TextInput
-                                placeholder="Points"
+                                placeholder="Points *"
                                 value={points}
                                 onChangeText={setPoints}
                                 keyboardType="numeric"
-                                style={styles.input}
+                                style={themeStyles.input}
                             />
                         </>
                     )}
 
                     <Picker
                         selectedValue={selectedChildId}
-                        onValueChange={(value) => setSelectedChildId(value)}
-                        style={styles.input}
+                        onValueChange={setSelectedChildId}
+                        style={themeStyles.input}
                     >
-                        <Picker.Item label="Assign to child" value={null} />
+                        <Picker.Item label="Assign to child *" value={null} />
                         {children.map((child) => (
                             <Picker.Item key={child.id} label={child.name} value={child.id} />
                         ))}
                     </Picker>
 
-                    <Button title="Create Task" onPress={handleCreate} />
+                    <View style={themeStyles.button}>
+                        <Button title="Create Task" onPress={handleCreate} />
+                    </View>
                 </ScrollView>
             </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
     );
-
 }
-
-const styles = StyleSheet.create({
-    container: { flex: 1, padding: 20 },
-
-    scrollContainer: {
-        padding: 20,
-        flexGrow: 1,
-        justifyContent: 'flex-start',
-    },
-
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    input: {
-        marginVertical: 8,
-        padding: 12,
-        borderColor: '#ccc',
-        borderWidth: 1,
-        borderRadius: 6,
-    },
-    row: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 10,
-    },
-
-
-});

@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
 import { api } from '../../services/api';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { colors, spacing, typography, themeStyles } from '../../styles/theme';
 
 export default function RegisterScreen() {
   const navigation = useNavigation<any>();
@@ -33,19 +34,21 @@ export default function RegisterScreen() {
     try {
       const payload = {
         ...form,
+        email,
         parent_id: form.role === 'child' ? Number(form.parent_id) : undefined,
       };
+
       const res = await api.post('/register', payload);
       const token = res.data.token;
       await AsyncStorage.setItem('token', token);
+
       Alert.alert('Success', 'Account created!');
 
-      const role = payload.role;
-      if (role === 'parent') {
-        navigation.navigate('Parent');
-      } else {
-        navigation.navigate('Child');
-      }
+      // Navigate to onboarding flow (regardless of role for now)
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Welcome' }],
+      });
     } catch (err: any) {
       console.error(err);
       Alert.alert('Error', err.response?.data?.error || 'Registration failed');
@@ -53,10 +56,10 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={themeStyles.container}>
       <TextInput
         placeholder="Name"
-        style={styles.input}
+        style={themeStyles.input}
         onChangeText={(text) => handleChange('name', text)}
       />
       <TextInput
@@ -68,17 +71,17 @@ export default function RegisterScreen() {
         placeholder="Email"
         autoCapitalize="none"
         keyboardType="email-address"
-        style={styles.input}
+        style={themeStyles.input}
       />
       <TextInput
         placeholder="Password"
-        style={styles.input}
+        style={themeStyles.input}
         secureTextEntry
         onChangeText={(text) => handleChange('password', text)}
       />
       <Picker
         selectedValue={form.role}
-        style={styles.input}
+        style={themeStyles.input}
         onValueChange={(value) => handleChange('role', value)}
       >
         <Picker.Item label="Parent" value="parent" />
@@ -87,7 +90,7 @@ export default function RegisterScreen() {
       {form.role === 'child' && (
         <TextInput
           placeholder="Parent ID"
-          style={styles.input}
+          style={themeStyles.input}
           keyboardType="numeric"
           onChangeText={(text) => handleChange('parent_id', text)}
         />
@@ -96,14 +99,3 @@ export default function RegisterScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 20 },
-  input: {
-    marginVertical: 8,
-    padding: 12,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 6,
-  },
-});

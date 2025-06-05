@@ -10,24 +10,15 @@ export default function AuthLoadingScreen() {
   useEffect(() => {
     const checkAuth = async () => {
       const token = await AsyncStorage.getItem('token');
-      if (token) {
-        try {
-          const res = await api.get('/me', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const role = res.data.user.role;
-          if (role === 'parent') {
-            navigation.reset({ index: 0, routes: [{ name: 'ParentDashboard' }] });
-          } else {
-            navigation.reset({ index: 0, routes: [{ name: 'ChildDashboard' }] });
-          }
-        } catch {
-          // Token invalid or expired
-          navigation.reset({ index: 0, routes: [{ name: 'Landing' }] });
-        }
+      const onboardingComplete = await AsyncStorage.getItem('onboardingComplete');
+      const role = await AsyncStorage.getItem('role');
+
+      if (!token) {
+        navigation.navigate('Landing');
+      } else if (onboardingComplete !== 'true') {
+        navigation.navigate('Welcome');
       } else {
-        // No token = new or logged-out user
-        navigation.reset({ index: 0, routes: [{ name: 'Landing' }] });
+        navigation.navigate(role === 'parent' ? 'Parent' : 'Child');
       }
     };
 
