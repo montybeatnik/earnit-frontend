@@ -11,7 +11,7 @@ export default function WelcomeScreen() {
             // navigation.navigate('BoilerplateSelection', { role });
             navigation.navigate('ParentRegister');
         } else {
-            navigation.navigate('ParentChildLink', { role });
+            navigation.navigate('ChildLink');
         }
     };
     return (

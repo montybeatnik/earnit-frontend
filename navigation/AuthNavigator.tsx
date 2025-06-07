@@ -12,6 +12,7 @@ import StarterSetupScreen from '../screens/onboarding/StarterSetupScreen';
 import ParentRegisterScreen from '../screens/onboarding/ParentRegisterScreen';
 import BoilerplateSelectionScreen from '../screens/onboarding/BoilerplateSelectionScreen';
 import ChildSetupScreen from '../screens/onboarding/ChildSetupScreen';
+import ChildLoginScreen from '../screens/child/ChildLoginScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -33,6 +34,7 @@ export default function AuthNavigator() {
         component={ChildSetupScreen}
         options={{ headerShown: true, title: 'Set Up Your Children' }}
       />
+      <Stack.Screen name="ChildLogin" component={ChildLoginScreen} options={{ headerShown: false }} />
     </Stack.Navigator >
   );
 }

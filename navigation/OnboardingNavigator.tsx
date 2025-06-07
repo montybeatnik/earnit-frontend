@@ -7,6 +7,8 @@ import BoilerplateSelectionScreen from '../screens/onboarding/BoilerplateSelecti
 import ParentChildLinkScreen from '../screens/onboarding/ParentChildLinkScreen';
 import ChildSetupScreen from '../screens/onboarding/ChildSetupScreen';
 import ParentRegisterScreen from '../screens/onboarding/ParentRegisterScreen';
+import ChildPasswordSetupScreen from '../screens/onboarding/ChildPasswordSetupScreen'
+import ChildLinkScreen from '../screens/onboarding/ChildLinkScreen'
 
 const Stack = createNativeStackNavigator();
 
@@ -23,6 +25,8 @@ export default function OnboardingNavigator() {
                 options={{ headerShown: true, title: 'Set Up Your Children' }}
             />
             <Stack.Screen name="ParentChildLink" component={ParentChildLinkScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="ChildPasswordSetup" component={ChildPasswordSetupScreen} />
+            <Stack.Screen name="ChildLink" component={ChildLinkScreen} />
         </Stack.Navigator>
     );
 }

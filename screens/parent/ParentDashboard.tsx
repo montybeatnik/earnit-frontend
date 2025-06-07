@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, StyleSheet, Alert, FlatList } from 'react-native';
+import { View, Text, Button, Alert, FlatList } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { api } from '../../services/api';
-import { theme } from '../../styles/theme';
+import { themeStyles } from '../../styles/theme';
 import StatusBadge from '../../components/StatusBadge';
 
 export default function ParentDashboard() {
   const navigation = useNavigation<any>();
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState<'pending' | 'approved'>('pending');
+  const [parentCode, setParentCode] = useState<string | null>(null);
 
   const fetchTasks = async () => {
     try {
@@ -21,6 +22,19 @@ export default function ParentDashboard() {
     } catch (err) {
       console.error(err);
       Alert.alert('Failed to load tasks');
+    }
+  };
+
+  const fetchParentCode = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const res = await api.get(`/parent/code`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setParentCode(res.data.code ?? null);
+    } catch (err) {
+      console.error(err);
+      setParentCode(null);
     }
   };
 
@@ -45,7 +59,10 @@ export default function ParentDashboard() {
   };
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', fetchTasks);
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchTasks();
+      fetchParentCode();
+    });
     return unsubscribe;
   }, [navigation]);
 
@@ -54,20 +71,26 @@ export default function ParentDashboard() {
   }, [filter]);
 
   return (
-    <View style={theme.container}>
-      <Text style={styles.title}>👩‍👧 Parent Dashboard</Text>
+    <View style={themeStyles.container}>
+      <Text style={themeStyles.title}>👩‍👧 Parent Dashboard</Text>
 
-      <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 10 }}>
+      {parentCode && (
+        <View style={themeStyles.codeBoxContainer}>
+          <Text style={themeStyles.codeBoxTitle}>Your Parent Code</Text>
+          <Text style={themeStyles.codeBoxValue}>{parentCode}</Text>
+        </View>
+      )}
+
+      <View style={themeStyles.row}>
         <Button
           title="Current"
           onPress={() => setFilter('pending')}
-          color={filter === 'pending' ? 'blue' : 'gray'}
+          color={filter === 'pending' ? '#3B82F6' : 'gray'}
         />
-        <View style={{ width: 10 }} />
         <Button
           title="History"
           onPress={() => setFilter('approved')}
-          color={filter === 'approved' ? 'blue' : 'gray'}
+          color={filter === 'approved' ? '#3B82F6' : 'gray'}
         />
       </View>
 
@@ -75,25 +98,26 @@ export default function ParentDashboard() {
         data={tasks}
         keyExtractor={(item) => item.id.toString()}
         ListEmptyComponent={
-          <Text style={{ textAlign: 'center' }}>
+          <Text style={themeStyles.bodyCenter}>
             {filter === 'approved' ? 'No completed tasks yet' : 'No current tasks'}
           </Text>
         }
         renderItem={({ item }) => (
-          <View style={theme.card}>
-            <Text style={theme.title}>{item.title}</Text>
-            <Text style={theme.subtitle}>{item.description}</Text>
-            <Text style={theme.points}>🏆 {item.points} points</Text>
+          <View style={themeStyles.card}>
+            <Text style={themeStyles.title}>{item.title}</Text>
+            <Text style={themeStyles.subtitle}>{item.description}</Text>
+            <Text style={themeStyles.body}>🏆 {item.points} points</Text>
             <StatusBadge status={item.status} />
-            <Text style={theme.timestamp}>
-              Created: {new Date(item.created_at).toLocaleDateString()} @ {new Date(item.created_at).toLocaleTimeString()}
+            <Text style={themeStyles.small}>
+              Created: {new Date(item.created_at).toLocaleDateString()} @{' '}
+              {new Date(item.created_at).toLocaleTimeString()}
             </Text>
             {filter === 'pending' && item.status?.toLowerCase() === 'awaiting_approval' && (
-              <View style={theme.buttonSpacing}>
+              <View style={themeStyles.buttonGroup}>
                 <Button
                   title="Approve Task"
                   onPress={() => handleApproveTask(item.id)}
-                  color="green"
+                  color="#10B981"
                 />
               </View>
             )}
@@ -101,26 +125,11 @@ export default function ParentDashboard() {
         )}
       />
 
-      <View style={theme.buttonSpacing}>
+      <View style={themeStyles.buttonGroup}>
         <Button title="Assign New Task" onPress={() => navigation.navigate('CreateTask')} />
-      </View>
-
-      <View style={theme.buttonSpacing}>
         <Button title="Manage Rewards" onPress={() => navigation.navigate('Rewards')} />
-      </View>
-
-      <View style={theme.buttonSpacing}>
-        <Button title="Log Out" onPress={handleLogout} color="red" />
+        <Button title="Log Out" onPress={handleLogout} color="#EF4444" />
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-});

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import { API_BASE_URL } from '@env';
 
 export default function ParentChildLinkScreen() {
     const [role, setRole] = useState('');
@@ -25,7 +26,7 @@ export default function ParentChildLinkScreen() {
             // Simulate parent code validation
             try {
                 const token = await AsyncStorage.getItem('token');
-                const res = await fetch(`https://your-api.com/link-parent`, {
+                const res = await fetch(`${API_BASE_URL}/link-parent`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -38,14 +39,13 @@ export default function ParentChildLinkScreen() {
                     throw new Error('Invalid code');
                 }
 
+                const data = await res.json();
+
                 Alert.alert('Success', 'You’re now linked with your parent.');
-                navigation.navigate('Boilerplate');
+                navigation.navigate('ChildPasswordSetup', { childId: data.child_id });
             } catch (err) {
                 Alert.alert('Error', 'Could not link to parent');
             }
-        } else {
-            // Parent continues without input
-            navigation.navigate('Boilerplate');
         }
     };
 

@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { themeStyles, typography, colors, spacing } from '../../styles/theme';
+import { API_BASE_URL } from '@env';
 
 interface Child {
     name: string;
@@ -41,7 +42,7 @@ export default function ChildSetupScreen() {
             const token = await AsyncStorage.getItem('token');
             const headers = { Authorization: `Bearer ${token}` };
 
-            await axios.post('http://localhost:8080/children', { children }, { headers });
+            await axios.post(`${API_BASE_URL}/children`, { children }, { headers });
             navigation.navigate('Parent' as never);
         } catch (err) {
             console.error('Failed to create children', err);

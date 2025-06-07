@@ -16,6 +16,8 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { themeStyles, typography, colors, spacing } from '../../styles/theme';
+import { API_BASE_URL } from '@env';
+
 
 export default function ParentRegisterScreen() {
     const [name, setName] = useState('');
@@ -25,7 +27,7 @@ export default function ParentRegisterScreen() {
 
     const handleRegister = async () => {
         try {
-            const res = await axios.post('http://10.0.0.8:8080/register', {
+            const res = await axios.post(`${API_BASE_URL}/register`, {
                 name,
                 email,
                 password,
@@ -36,10 +38,25 @@ export default function ParentRegisterScreen() {
             if (token) {
                 await AsyncStorage.setItem('token', token);
                 await AsyncStorage.setItem('role', 'parent');
+
+                // ✅ Fetch and store parent code
+                const parent_code_res = await fetch(`${API_BASE_URL}/parent/code`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const parent_code_resp = await parent_code_res.json();
+
+                if (parent_code_resp.code) {
+                    await AsyncStorage.setItem('parentCode', parent_code_resp.code);
+                    console.log('Stored parent code:', parent_code_resp.code);
+                } else {
+                    console.warn('Parent code was null or missing');
+                }
+
                 navigation.navigate('BoilerplateSelection');
             } else {
                 Alert.alert('Registration failed', 'No token returned');
             }
+
         } catch (err) {
             console.error('Registration error:', err);
             Alert.alert('Registration failed', 'Check your input or try again later');

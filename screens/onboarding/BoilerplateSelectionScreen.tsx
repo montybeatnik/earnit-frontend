@@ -11,6 +11,7 @@ import { useNavigation } from '@react-navigation/native';
 import { themeStyles, typography, colors, spacing } from '../../styles/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SelectableCard } from '../../components/SelectableCard';
+import { API_BASE_URL } from '@env';
 
 interface TemplateItem {
     id: number;
@@ -30,8 +31,8 @@ export default function BoilerplateSelectionScreen() {
         const fetchTemplates = async () => {
             try {
                 const [taskRes, rewardRes] = await Promise.all([
-                    axios.get('http://localhost:8080/boilerplate/tasks'),
-                    axios.get('http://localhost:8080/boilerplate/rewards'),
+                    axios.get(`${API_BASE_URL}/boilerplate/tasks`),
+                    axios.get(`${API_BASE_URL}/boilerplate/rewards`),
                 ]);
                 setTasks(taskRes.data.tasks);
                 setRewards(rewardRes.data.rewards);
@@ -62,13 +63,13 @@ export default function BoilerplateSelectionScreen() {
             const headers = { Authorization: `Bearer ${token}` };
 
             await axios.post(
-                'http://localhost:8080/boilerplate/assign-tasks',
+                `${API_BASE_URL}/boilerplate/assign-tasks`,
                 { task_ids: selectedTaskIds },
                 { headers }
             );
 
             await axios.post(
-                'http://localhost:8080/boilerplate/assign-rewards',
+                `${API_BASE_URL}/boilerplate/assign-rewards`,
                 { reward_ids: selectedRewardIds },
                 { headers }
             );

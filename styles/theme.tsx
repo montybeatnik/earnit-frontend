@@ -108,7 +108,7 @@ export const themeStyles = StyleSheet.create({
         borderColor: colors.gray,
         borderRadius: 6,
         padding: spacing.sm,
-        marginVertical: spacing.sm,
+        marginVertical: spacing.xs,
         backgroundColor: '#fff',
     },
     button: {
@@ -163,6 +163,28 @@ export const themeStyles = StyleSheet.create({
         padding: spacing.md,
         marginBottom: spacing.md,
         width: '100%',
+    },
+
+    // 🆕 Parent Code Styles
+    codeBoxContainer: {
+        borderWidth: 1,
+        borderColor: colors.primary,
+        padding: spacing.md,
+        borderRadius: 10,
+        backgroundColor: colors.light,
+        marginVertical: spacing.md,
+        alignItems: 'center',
+    },
+    codeBoxTitle: {
+        fontSize: 16,
+        color: colors.gray,
+        marginBottom: spacing.sm,
+    },
+    codeBoxValue: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: colors.primary,
+        letterSpacing: 1,
     },
 });
 
