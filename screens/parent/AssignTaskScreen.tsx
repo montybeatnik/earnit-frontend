@@ -62,32 +62,34 @@ export default function AssignTaskScreen() {
     };
 
     return (
-        <View style={themeStyles.container}>
-            <Text style={themeStyles.title}>Assign a Task</Text>
+        <View style={themeStyles.fullScreenContainer}>
+            <Text style={themeStyles.screenHeader}>Assign a Task</Text>
 
-            {children.length > 1 && (
+            <View style={themeStyles.buttonGroup}>
+                {children.length > 1 && (
+                    <DropdownPicker
+                        label="Select Child"
+                        selectedValue={selectedChildId}
+                        options={children.map((child) => ({ label: child.name, value: child.ID }))}
+                        onSelect={setSelectedChildId}
+                        visible={childDropdownVisible}
+                        setVisible={setChildDropdownVisible}
+                    />
+                )}
+
                 <DropdownPicker
-                    label="Select Child"
-                    selectedValue={selectedChildId}
-                    options={children.map((child) => ({ label: child.name, value: child.ID }))}
-                    onSelect={setSelectedChildId}
-                    visible={childDropdownVisible}
-                    setVisible={setChildDropdownVisible}
+                    label="Select Task"
+                    selectedValue={selectedTaskId}
+                    options={tasks.map((task) => ({ label: task.title, value: task.id }))}
+                    onSelect={setSelectedTaskId}
+                    visible={taskDropdownVisible}
+                    setVisible={setTaskDropdownVisible}
                 />
-            )}
 
-            <DropdownPicker
-                label="Select Task"
-                selectedValue={selectedTaskId}
-                options={tasks.map((task) => ({ label: task.title, value: task.id }))}
-                onSelect={setSelectedTaskId}
-                visible={taskDropdownVisible}
-                setVisible={setTaskDropdownVisible}
-            />
-
-            <Pressable onPress={handleAssign} style={themeStyles.button}>
-                <Text style={themeStyles.buttonText}>Assign Task</Text>
-            </Pressable>
+                <Pressable onPress={handleAssign} style={themeStyles.button}>
+                    <Text style={themeStyles.buttonText}>Assign Task</Text>
+                </Pressable>
+            </View>
         </View>
     );
 }

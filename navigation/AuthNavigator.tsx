@@ -16,12 +16,15 @@ import ChildLoginScreen from '../screens/child/ChildLoginScreen';
 import ChildSelectorScreen from '../screens/onboarding/ChildSelectorScreen';
 import SelectChildScreen from '../screens/onboarding/SelectChildScreen';
 import ChildPasswordSetupScreen from '../screens/onboarding/ChildPasswordSetupScreen';
+import DevSwitchScreen from '../screens/DevSwitchScreen'; // adjust path if needed
 
 const Stack = createNativeStackNavigator();
 
 export default function AuthNavigator() {
   return (
     <Stack.Navigator initialRouteName="AuthLoading">
+      {/* TODO: This will not be needed long term! */}
+      <Stack.Screen name="DevSwitch" component={DevSwitchScreen} />
       <Stack.Screen name="Onboarding" component={OnboardingNavigator} options={{ headerShown: false }} />
       <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
       <Stack.Screen name="StarterSetup" component={StarterSetupScreen} />

@@ -16,7 +16,7 @@ export default function WelcomeScreen() {
     };
     return (
         <View style={theme.container}>
-            <Image source={require('../../assets/onboarding-welcome.png')} style={theme.image} resizeMode="contain" />
+            <Image source={require('../../assets/onboarding-welcome-2.png')} style={theme.image} resizeMode="contain" />
 
             <Text style={theme.title}>Welcome to EarnIt</Text>
             <Text style={theme.subtitle}>Helping kids learn responsibility and earn rewards.</Text>

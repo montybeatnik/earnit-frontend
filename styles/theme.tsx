@@ -186,6 +186,14 @@ export const themeStyles = StyleSheet.create({
         color: colors.primary,
         letterSpacing: 1,
     },
+    screenHeader: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: colors.text,
+        textAlign: 'center',
+        marginBottom: spacing.lg,
+        width: '100%',
+    },
 });
 
 export const themedStyles = (

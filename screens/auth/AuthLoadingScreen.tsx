@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, Button, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { api } from '../../services/api';
@@ -33,6 +33,7 @@ export default function AuthLoadingScreen() {
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <ActivityIndicator size="large" />
+      <Button title="Dev Switch" onPress={() => navigation.navigate('DevSwitch')} />
     </View>
   );
 }

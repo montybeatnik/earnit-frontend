@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, Alert, FlatList, Pressable } from 'react-native';
+import { View, Text, FlatList, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { api } from '../../services/api';
-import { themeStyles } from '../../styles/theme';
+import { themeStyles, colors } from '../../styles/theme';
 import StatusBadge from '../../components/StatusBadge';
+import ThemedButton from '../../components/ThemedButton';
 
-export default function ParentDashboard() {
+export default function ParentDashboardScreen() {
   const navigation = useNavigation<any>();
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState<'pending' | 'approved'>('pending');
@@ -71,8 +72,8 @@ export default function ParentDashboard() {
   }, [filter]);
 
   return (
-    <View style={themeStyles.container}>
-      <Text style={themeStyles.title}>👩‍👧 Parent Dashboard</Text>
+    <View style={themeStyles.fullScreenContainer}>
+      <Text style={themeStyles.screenHeader}>👩‍👧 Parent Dashboard</Text>
 
       {parentCode && (
         <View style={themeStyles.codeBoxContainer}>
@@ -81,22 +82,30 @@ export default function ParentDashboard() {
         </View>
       )}
 
-      <View style={themeStyles.row}>
-        <Button
-          title="Current"
-          onPress={() => setFilter('pending')}
-          color={filter === 'pending' ? '#3B82F6' : 'gray'}
-        />
-        <Button
-          title="History"
-          onPress={() => setFilter('approved')}
-          color={filter === 'approved' ? '#3B82F6' : 'gray'}
-        />
-      </View>
-
       <FlatList
         data={tasks}
         keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={{ paddingBottom: 120 }}
+        ListHeaderComponent={
+          <View>
+            <View style={themeStyles.row}>
+              <ThemedButton
+                title="Current"
+                onPress={() => setFilter('pending')}
+                color={filter === 'pending' ? colors.primary : colors.gray}
+              />
+              <ThemedButton
+                title="History"
+                onPress={() => setFilter('approved')}
+                color={filter === 'approved' ? colors.primary : colors.gray}
+              />
+            </View>
+
+            <Text style={themeStyles.subtitle}>
+              {filter === 'pending' ? 'Pending Tasks' : 'Completed Tasks'}
+            </Text>
+          </View>
+        }
         ListEmptyComponent={
           <Text style={themeStyles.bodyCenter}>
             {filter === 'approved' ? 'No completed tasks yet' : 'No current tasks'}
@@ -108,16 +117,17 @@ export default function ParentDashboard() {
             <Text style={themeStyles.subtitle}>{item.description}</Text>
             <Text style={themeStyles.body}>🏆 {item.points} points</Text>
             <StatusBadge status={item.status} />
+            <Text style={themeStyles.small}>Assigned to: {item.assigned_to_name}</Text>
             <Text style={themeStyles.small}>
               Created: {new Date(item.created_at).toLocaleDateString()} @{' '}
               {new Date(item.created_at).toLocaleTimeString()}
             </Text>
             {filter === 'pending' && item.status?.toLowerCase() === 'awaiting_approval' && (
               <View style={themeStyles.buttonGroup}>
-                <Button
+                <ThemedButton
                   title="Approve Task"
                   onPress={() => handleApproveTask(item.id)}
-                  color="#10B981"
+                  color={colors.secondary}
                 />
               </View>
             )}
@@ -126,13 +136,11 @@ export default function ParentDashboard() {
       />
 
       <View style={themeStyles.buttonGroup}>
-        <Button title="Assign Task" onPress={() => navigation.navigate('AssignTask')} />
-        <Button title="Create New Task" onPress={() => navigation.navigate('CreateTaskTemplate')} />
-        <Button title="Manage Rewards" onPress={() => navigation.navigate('Rewards')} />
-        <Button title="Log Out" onPress={handleLogout} color="#EF4444" />
+        <ThemedButton title="Assign Task" onPress={() => navigation.navigate('AssignTask')} />
+        <ThemedButton title="Create New Task" onPress={() => navigation.navigate('CreateTaskTemplate')} />
+        <ThemedButton title="Manage Rewards" onPress={() => navigation.navigate('Rewards')} />
+        <ThemedButton title="Log Out" onPress={handleLogout} color={colors.danger} />
       </View>
-
-
     </View>
   );
 }

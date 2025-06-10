@@ -5,18 +5,33 @@ import {
     FlatList,
     Button,
     Alert,
-    StyleSheet,
     ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+import { API_BASE_URL } from '@env';
 import { api } from '../../services/api';
+import { themeStyles, colors, spacing, typography } from '../../styles/theme';
 
 export default function RewardShopScreen() {
     const [rewards, setRewards] = useState([]);
+    const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const navigation = useNavigation<any>();
+
+    const fetchUser = async () => {
+        try {
+            const token = await AsyncStorage.getItem('token');
+            const res = await axios.get(`${API_BASE_URL}/me`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setUser(res.data.user);
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     const fetchRewards = async () => {
         try {
@@ -37,7 +52,7 @@ export default function RewardShopScreen() {
     const handleRedeem = async (reward: any) => {
         try {
             const token = await AsyncStorage.getItem('token');
-            const res = await api.post(`/rewards/${reward.id}/redeem`, null, {
+            await api.post(`/rewards/${reward.id}/redeem`, null, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
@@ -47,6 +62,7 @@ export default function RewardShopScreen() {
                 Alert.alert('🎉 Redeemed!', 'Reward requested successfully!');
                 fetchRewards();
             }
+
             navigation.navigate('RewardCelebration', { reward });
         } catch (err: any) {
             console.error(err);
@@ -58,11 +74,21 @@ export default function RewardShopScreen() {
         fetchRewards();
     }, []);
 
+    useEffect(() => {
+        fetchUser();
+    }, []);
+
     if (loading) return <ActivityIndicator style={{ marginTop: 40 }} />;
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>🎁 Reward Shop</Text>
+        <View style={themeStyles.container}>
+            <Text style={themeStyles.title}>🎁 Reward Shop</Text>
+
+            {user && (
+                <View style={styles.pointsBanner}>
+                    <Text style={styles.pointsText}>🌟 You have {user.points} points!</Text>
+                </View>
+            )}
 
             <FlatList
                 data={rewards}
@@ -72,7 +98,7 @@ export default function RewardShopScreen() {
                 renderItem={({ item }) => (
                     <View style={styles.card}>
                         <Text style={styles.rewardTitle}>{item.title}</Text>
-                        <Text>{item.description}</Text>
+                        <Text style={styles.description}>{item.description}</Text>
                         <Text style={styles.cost}>Cost: {item.cost} pts</Text>
                         <Button title="Redeem" onPress={() => handleRedeem(item)} />
                     </View>
@@ -82,16 +108,45 @@ export default function RewardShopScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, padding: 20 },
-    title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-    card: {
-        padding: 12,
+const styles = {
+    pointsBanner: {
+        backgroundColor: colors.light,
+        borderColor: colors.primary,
         borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 6,
-        marginBottom: 10,
+        borderRadius: 12,
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.md,
+        marginBottom: spacing.lg,
+        alignSelf: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
     },
-    rewardTitle: { fontWeight: 'bold', fontSize: 16 },
-    cost: { fontStyle: 'italic', color: 'green', marginBottom: 6 },
-});
+    pointsText: {
+        ...typography.subtitle,
+        color: colors.primary,
+    },
+    card: {
+        backgroundColor: colors.light,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: colors.gray,
+        padding: spacing.md,
+        marginBottom: spacing.md,
+    },
+    rewardTitle: {
+        ...typography.subtitle,
+        marginBottom: spacing.xs,
+    },
+    description: {
+        ...typography.body,
+        marginBottom: spacing.xs,
+    },
+    cost: {
+        ...typography.small,
+        color: colors.secondary,
+        marginBottom: spacing.sm,
+    },
+};

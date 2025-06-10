@@ -3,6 +3,7 @@ import { View, Text, Button, FlatList, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../../services/api';
+import ThemedButton from '../../components/ThemedButton';
 
 export default function RewardListScreen() {
     const navigation = useNavigation<any>();
@@ -42,7 +43,7 @@ export default function RewardListScreen() {
                 )}
             />
 
-            <Button
+            <ThemedButton
                 title="Create New Reward"
                 onPress={() => navigation.navigate('CreateReward')}
             />
