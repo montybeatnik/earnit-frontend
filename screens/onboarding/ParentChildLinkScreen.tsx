@@ -18,37 +18,32 @@ export default function ParentChildLinkScreen() {
 
     const handleContinue = async () => {
         if (role === 'child') {
-            if (!parentCode) {
+            if (!parentCode.trim()) {
                 Alert.alert('Missing', 'Please enter your parent’s code');
                 return;
             }
 
-            // Simulate parent code validation
             try {
-                const token = await AsyncStorage.getItem('token');
-                const res = await fetch(`${API_BASE_URL}/link-parent`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({ parent_code: parentCode }),
-                });
+                const res = await fetch(`${API_BASE_URL}/children/by-parent-code/${parentCode.trim()}`);
 
                 if (!res.ok) {
-                    throw new Error('Invalid code');
+                    throw new Error('Failed to fetch children');
                 }
 
-                const data = await res.json();
+                const children = await res.json();
 
-                Alert.alert('Success', 'You’re now linked with your parent.');
-                navigation.navigate('ChildPasswordSetup', { childId: data.child_id });
+                if (children.length === 0) {
+                    Alert.alert('No matches', 'No children found for that code.');
+                    return;
+                }
+
+                navigation.navigate('ChildSelector', { children });
             } catch (err) {
-                Alert.alert('Error', 'Could not link to parent');
+                console.error(err);
+                Alert.alert('Error', 'Could not look up children.');
             }
         }
     };
-
     return (
         <View style={styles.container}>
             {role === 'child' ? (

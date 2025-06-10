@@ -22,12 +22,10 @@ export default function ChildLinkScreen() {
         }
 
         try {
-            const token = await AsyncStorage.getItem('token');
             const res = await fetch(`${API_BASE_URL}/link-parent`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,  // ✅ this must be present
                 },
                 body: JSON.stringify({ parent_code: parentCode }),
             });
@@ -35,20 +33,28 @@ export default function ChildLinkScreen() {
             if (!res.ok) throw new Error('Invalid code');
 
             const data = await res.json();
+            const children = data.children;
 
-            if (data.child_id) {
+            if (!children || children.length === 0) {
+                Alert.alert('Error', 'No children found for this parent code.');
+                return;
+            }
+
+            if (children.length === 1) {
+                // Only one child — go straight to setup
                 navigation.navigate('ChildPasswordSetup', {
-                    childId: data.child_id,
+                    childId: children[0].id,
                 });
             } else {
-                Alert.alert('Error', 'Unexpected response from server.');
+                // Multiple children — ask which one
+                navigation.navigate('SelectChild', { children });
             }
+
         } catch (err) {
             console.error('Link error:', err);
             Alert.alert('Failed', 'Could not link to parent. Try again.');
         }
     };
-
     return (
         <View style={themeStyles.fullScreenContainer}>
             <View style={{ flex: 1, justifyContent: 'center' }}>
@@ -61,6 +67,7 @@ export default function ChildLinkScreen() {
                 </Text>
 
                 <TextInput
+                    autoFocus
                     style={themeStyles.input}
                     placeholder="Enter Parent Code"
                     value={parentCode}

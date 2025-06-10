@@ -13,12 +13,15 @@ import ParentRegisterScreen from '../screens/onboarding/ParentRegisterScreen';
 import BoilerplateSelectionScreen from '../screens/onboarding/BoilerplateSelectionScreen';
 import ChildSetupScreen from '../screens/onboarding/ChildSetupScreen';
 import ChildLoginScreen from '../screens/child/ChildLoginScreen';
+import ChildSelectorScreen from '../screens/onboarding/ChildSelectorScreen';
+import SelectChildScreen from '../screens/onboarding/SelectChildScreen';
+import ChildPasswordSetupScreen from '../screens/onboarding/ChildPasswordSetupScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function AuthNavigator() {
   return (
-    <Stack.Navigator initialRouteName="Onboarding">
+    <Stack.Navigator initialRouteName="AuthLoading">
       <Stack.Screen name="Onboarding" component={OnboardingNavigator} options={{ headerShown: false }} />
       <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
       <Stack.Screen name="StarterSetup" component={StarterSetupScreen} />
@@ -29,10 +32,13 @@ export default function AuthNavigator() {
       <Stack.Screen name="Child" component={ChildNavigator} options={{ headerShown: false }} />
       <Stack.Screen name="ParentRegister" component={ParentRegisterScreen} />
       <Stack.Screen name="BoilerplateSelection" component={BoilerplateSelectionScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ChildSelector" component={ChildSelectorScreen} />
+      <Stack.Screen name="ChildPasswordSetup" component={ChildPasswordSetupScreen} />
+      <Stack.Screen name="ChildSetupScreen" component={ChildSetupScreen} />
       <Stack.Screen
-        name="ChildSetup"
-        component={ChildSetupScreen}
-        options={{ headerShown: true, title: 'Set Up Your Children' }}
+        name="SelectChild"
+        component={SelectChildScreen}
+        options={{ headerShown: true, title: 'Choose Your Name' }}
       />
       <Stack.Screen name="ChildLogin" component={ChildLoginScreen} options={{ headerShown: false }} />
     </Stack.Navigator >

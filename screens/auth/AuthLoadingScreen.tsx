@@ -7,22 +7,27 @@ import { api } from '../../services/api';
 export default function AuthLoadingScreen() {
   const navigation = useNavigation<any>();
 
+  // screens/auth/AuthLoadingScreen.tsx
+
   useEffect(() => {
-    const checkAuth = async () => {
+    const bootstrapAsync = async () => {
       const token = await AsyncStorage.getItem('token');
-      const onboardingComplete = await AsyncStorage.getItem('onboardingComplete');
       const role = await AsyncStorage.getItem('role');
 
-      if (!token) {
-        navigation.navigate('Landing');
-      } else if (onboardingComplete !== 'true') {
-        navigation.navigate('Welcome');
+      if (token && role) {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: role === 'parent' ? 'Parent' : 'Child' }],
+        });
       } else {
-        navigation.navigate(role === 'parent' ? 'Parent' : 'Child');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Onboarding' }],
+        });
       }
     };
 
-    checkAuth();
+    bootstrapAsync();
   }, []);
 
   return (

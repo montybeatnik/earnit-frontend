@@ -68,6 +68,8 @@ export default function BoilerplateSelectionScreen() {
                 { headers }
             );
 
+            console.log("DEBUG: selected reward IDs: ", selectedRewardIds)
+
             await axios.post(
                 `${API_BASE_URL}/boilerplate/assign-rewards`,
                 { reward_ids: selectedRewardIds },

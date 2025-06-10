@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, Alert, FlatList } from 'react-native';
+import { View, Text, Button, Alert, FlatList, Pressable } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { api } from '../../services/api';
@@ -126,10 +126,13 @@ export default function ParentDashboard() {
       />
 
       <View style={themeStyles.buttonGroup}>
-        <Button title="Assign New Task" onPress={() => navigation.navigate('CreateTask')} />
+        <Button title="Assign Task" onPress={() => navigation.navigate('AssignTask')} />
+        <Button title="Create New Task" onPress={() => navigation.navigate('CreateTaskTemplate')} />
         <Button title="Manage Rewards" onPress={() => navigation.navigate('Rewards')} />
         <Button title="Log Out" onPress={handleLogout} color="#EF4444" />
       </View>
+
+
     </View>
   );
 }
