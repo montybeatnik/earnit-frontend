@@ -6,12 +6,27 @@ import { api } from '../../services/api';
 import { themeStyles, colors } from '../../styles/theme';
 import StatusBadge from '../../components/StatusBadge';
 import ThemedButton from '../../components/ThemedButton';
+import Modal from 'react-native-modal';
+import { Pressable } from 'react-native';
 
 export default function ParentDashboardScreen() {
+  const [isModalVisible, setModalVisible] = useState(false);
   const navigation = useNavigation<any>();
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState<'pending' | 'approved'>('pending');
   const [parentCode, setParentCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchTasks();
+      fetchParentCode();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [filter]);
 
   const fetchTasks = async () => {
     try {
@@ -35,7 +50,6 @@ export default function ParentDashboardScreen() {
       setParentCode(res.data.code ?? null);
     } catch (err) {
       console.error(err);
-      setParentCode(null);
     }
   };
 
@@ -53,24 +67,6 @@ export default function ParentDashboardScreen() {
     }
   };
 
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem('token');
-    Alert.alert('Logged out');
-    navigation.navigate('Login');
-  };
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchTasks();
-      fetchParentCode();
-    });
-    return unsubscribe;
-  }, [navigation]);
-
-  useEffect(() => {
-    fetchTasks();
-  }, [filter]);
-
   return (
     <View style={themeStyles.fullScreenContainer}>
       <Text style={themeStyles.screenHeader}>👩‍👧 Parent Dashboard</Text>
@@ -82,30 +78,23 @@ export default function ParentDashboardScreen() {
         </View>
       )}
 
+      <View style={themeStyles.row}>
+        <ThemedButton
+          title="Current"
+          onPress={() => setFilter('pending')}
+          color={filter === 'pending' ? colors.primary : colors.gray}
+        />
+        <ThemedButton
+          title="History"
+          onPress={() => setFilter('approved')}
+          color={filter === 'approved' ? colors.primary : colors.gray}
+        />
+      </View>
+
       <FlatList
         data={tasks}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingBottom: 120 }}
-        ListHeaderComponent={
-          <View>
-            <View style={themeStyles.row}>
-              <ThemedButton
-                title="Current"
-                onPress={() => setFilter('pending')}
-                color={filter === 'pending' ? colors.primary : colors.gray}
-              />
-              <ThemedButton
-                title="History"
-                onPress={() => setFilter('approved')}
-                color={filter === 'approved' ? colors.primary : colors.gray}
-              />
-            </View>
-
-            <Text style={themeStyles.subtitle}>
-              {filter === 'pending' ? 'Pending Tasks' : 'Completed Tasks'}
-            </Text>
-          </View>
-        }
         ListEmptyComponent={
           <Text style={themeStyles.bodyCenter}>
             {filter === 'approved' ? 'No completed tasks yet' : 'No current tasks'}
@@ -114,14 +103,18 @@ export default function ParentDashboardScreen() {
         renderItem={({ item }) => (
           <View style={themeStyles.card}>
             <Text style={themeStyles.title}>{item.title}</Text>
-            <Text style={themeStyles.subtitle}>{item.description}</Text>
-            <Text style={themeStyles.body}>🏆 {item.points} points</Text>
-            <StatusBadge status={item.status} />
             <Text style={themeStyles.small}>Assigned to: {item.assigned_to_name}</Text>
-            <Text style={themeStyles.small}>
-              Created: {new Date(item.created_at).toLocaleDateString()} @{' '}
-              {new Date(item.created_at).toLocaleTimeString()}
-            </Text>
+            <Text style={themeStyles.subtitle}>{item.description}</Text>
+
+            <View style={{ marginTop: 8 }}>
+              <Text style={themeStyles.body}>🏆 {item.points} points</Text>
+              <StatusBadge status={item.status} />
+              <Text style={themeStyles.small}>
+                Created: {new Date(item.created_at).toLocaleDateString()} @{' '}
+                {new Date(item.created_at).toLocaleTimeString()}
+              </Text>
+            </View>
+
             {filter === 'pending' && item.status?.toLowerCase() === 'awaiting_approval' && (
               <View style={themeStyles.buttonGroup}>
                 <ThemedButton
@@ -134,13 +127,56 @@ export default function ParentDashboardScreen() {
           </View>
         )}
       />
-
-      <View style={themeStyles.buttonGroup}>
-        <ThemedButton title="Assign Task" onPress={() => navigation.navigate('AssignTask')} />
-        <ThemedButton title="Create New Task" onPress={() => navigation.navigate('CreateTaskTemplate')} />
-        <ThemedButton title="Manage Rewards" onPress={() => navigation.navigate('Rewards')} />
-        <ThemedButton title="Log Out" onPress={handleLogout} color={colors.danger} />
-      </View>
+      <Pressable
+        onPress={() => setModalVisible(true)}
+        style={{
+          position: 'absolute',
+          bottom: 30,
+          right: 20,
+          backgroundColor: colors.primary,
+          borderRadius: 30,
+          padding: 16,
+          elevation: 5,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.3,
+          shadowRadius: 4,
+        }}
+      >
+        <Text style={{ color: 'white', fontSize: 24, fontWeight: 'bold' }}>＋</Text>
+      </Pressable>
+      <Modal
+        isVisible={isModalVisible}
+        onBackdropPress={() => setModalVisible(false)}
+        style={{ justifyContent: 'flex-end', margin: 0 }}
+      >
+        <View style={{
+          backgroundColor: colors.background,
+          padding: 20,
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
+        }}>
+          <Text style={[themeStyles.subtitle, { marginBottom: 12, textAlign: 'center' }]}>Quick Actions</Text>
+          <ThemedButton title="Assign Task" onPress={() => {
+            setModalVisible(false);
+            navigation.navigate('AssignTask');
+          }} />
+          <ThemedButton title="Create New Task" onPress={() => {
+            setModalVisible(false);
+            navigation.navigate('CreateTaskTemplate');
+          }} />
+          <ThemedButton title="Manage Rewards" onPress={() => {
+            setModalVisible(false);
+            navigation.navigate('Rewards');
+          }} />
+          <ThemedButton title="Log Out" color={colors.danger} onPress={async () => {
+            await AsyncStorage.removeItem('token');
+            Alert.alert('Logged out');
+            navigation.navigate('Login');
+          }} />
+        </View>
+      </Modal>
     </View>
+
   );
 }
