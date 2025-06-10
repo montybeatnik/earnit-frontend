@@ -47,6 +47,7 @@ export default function RewardShopScreen() {
                 Alert.alert('🎉 Redeemed!', 'Reward requested successfully!');
                 fetchRewards();
             }
+            navigation.navigate('RewardCelebration', { reward });
         } catch (err: any) {
             console.error(err);
             Alert.alert('Oops', err.response?.data?.error || 'Redemption failed');
