@@ -3,18 +3,16 @@ import { View, Text, TextInput, Pressable, Alert } from 'react-native';
 import axios from 'axios';
 import { API_BASE_URL } from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
-import { themeStyles, typography, spacing } from '../../styles/theme';
+import { themeStyles, typography, spacing, colors } from '../../styles/theme';
 
 export default function CreateTaskScreen() {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [points, setPoints] = useState('');
     const [children, setChildren] = useState([]);
-    const [selectedChild, setSelectedChild] = useState('');
+    const [selectedChildIds, setSelectedChildIds] = useState<string[]>([]);
     const navigation = useNavigation<any>();
-    const [selectedChildId, setSelectedChildId] = useState('');
 
     useEffect(() => {
         const fetchChildren = async () => {
@@ -25,10 +23,7 @@ export default function CreateTaskScreen() {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                setChildren(res.data.children);
-                if (res.data.children.length > 0) {
-                    setSelectedChild(res.data.children[0].id.toString());
-                }
+                setChildren(res.data.children || []);
             } catch (err) {
                 console.error('Failed to fetch children', err);
                 Alert.alert('Error', 'Could not load children');
@@ -38,38 +33,53 @@ export default function CreateTaskScreen() {
         fetchChildren();
     }, []);
 
+    const toggleChild = (childId: string) => {
+        setSelectedChildIds((prev) =>
+            prev.includes(childId)
+                ? prev.filter((id) => id !== childId)
+                : [...prev, childId]
+        );
+    };
+
     const handleCreate = async () => {
         const pointsInt = parseInt(points, 10);
-        const assignedToId = parseInt(selectedChildId, 10);
-
-        if (!title || !description || isNaN(pointsInt) || isNaN(assignedToId)) {
+        if (!title || !description || isNaN(pointsInt) || selectedChildIds.length === 0) {
             Alert.alert('Missing fields', 'Please fill out all fields correctly.');
             return;
         }
 
-        const token = await AsyncStorage.getItem('token');
-
         try {
-            await axios.post(`${API_BASE_URL}/tasks`, {
-                title,
-                description,
-                points: pointsInt,
-                assigned_to_id: assignedToId, // ✅ Converted to number here
-            }, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const token = await AsyncStorage.getItem('token');
+            await Promise.all(
+                selectedChildIds.map((idStr) => {
+                    const assignedToId = parseInt(idStr, 10);
+                    return axios.post(`${API_BASE_URL}/tasks`, {
+                        title,
+                        description,
+                        points: pointsInt,
+                        assigned_to_id: assignedToId,
+                    }, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                })
+            );
 
-            Alert.alert('Success', 'Task created!');
-            // Optionally reset inputs here
+            Alert.alert('Success', 'Task(s) created!');
+            setTitle('');
+            setDescription('');
+            setPoints('');
+            setSelectedChildIds([]);
         } catch (err) {
             console.error('Task creation error:', err);
-            Alert.alert('Error', 'Could not create task.');
+            Alert.alert('Error', 'Could not create task(s).');
         }
     };
 
     return (
         <View style={themeStyles.fullScreenContainer}>
-            <Text style={[typography.title, { textAlign: 'center', marginBottom: spacing.lg }]}>Create Task</Text>
+            <Text style={[typography.title, { textAlign: 'center', marginBottom: spacing.lg }]}>
+                Create Task
+            </Text>
 
             <TextInput
                 placeholder="Task Title"
@@ -93,15 +103,43 @@ export default function CreateTaskScreen() {
                 style={themeStyles.input}
             />
 
-            <Text style={themeStyles.label}>Assign To:</Text>
-            <Picker
-                selectedValue={selectedChildId}
-                onValueChange={(itemValue) => setSelectedChildId(itemValue)}
-            >
-                {children.map((child) => (
-                    <Picker.Item key={child.id} label={child.username} value={child.id.toString()} />
-                ))}
-            </Picker>
+            <Text style={[typography.subtitle, { marginTop: spacing.lg }]}>Assign To:</Text>
+
+            {children.length === 0 ? (
+                <Text style={themeStyles.bodyCenter}>No children found.</Text>
+            ) : (
+                <View style={{ width: '100%', marginTop: spacing.sm }}>
+                    {children.map((child) => {
+                        const idStr = child.id?.toString() || child.ID?.toString();
+                        const isSelected = selectedChildIds.includes(idStr);
+
+                        return (
+                            <Pressable
+                                key={idStr}
+                                onPress={() => toggleChild(idStr)}
+                                style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    paddingVertical: 8,
+                                }}
+                            >
+                                <View
+                                    style={{
+                                        width: 20,
+                                        height: 20,
+                                        borderRadius: 4,
+                                        borderWidth: 2,
+                                        borderColor: isSelected ? colors.primary : colors.gray,
+                                        backgroundColor: isSelected ? colors.primary : 'transparent',
+                                        marginRight: 12,
+                                    }}
+                                />
+                                <Text style={typography.body}>{child.name}</Text>
+                            </Pressable>
+                        );
+                    })}
+                </View>
+            )}
 
             <Pressable onPress={handleCreate} style={themeStyles.button}>
                 <Text style={themeStyles.buttonText}>Create</Text>
