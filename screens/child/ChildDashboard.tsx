@@ -13,7 +13,7 @@ export default function ChildDashboard() {
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState<'pending' | 'approved'>('pending');
   const navigation = useNavigation<any>();
-  const { lastMessage } = useWebSocket();
+  const lastMessage = useWebSocket();
 
   const fetchUser = async () => {
     try {
@@ -43,9 +43,11 @@ export default function ChildDashboard() {
   const handleComplete = async (taskId: number) => {
     try {
       const token = await AsyncStorage.getItem('token');
-      await axios.put(`${API_BASE_URL}/tasks/${taskId}/complete`, null, {
+
+      await axios.put(`${API_BASE_URL}/tasks/${taskId}/submit`, null, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       Alert.alert('Submitted!', 'Task marked as complete. Awaiting approval.');
       fetchTasks();
     } catch (err) {
@@ -76,9 +78,9 @@ export default function ChildDashboard() {
   );
 
   useEffect(() => {
+    console.log("📥 lastMessage changed:", lastMessage);
     if (lastMessage) {
       Alert.alert('Notification', lastMessage);
-      // You could also trigger a toast or badge here
     }
   }, [lastMessage]);
 

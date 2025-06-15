@@ -8,6 +8,7 @@ import StatusBadge from '../../components/StatusBadge';
 import ThemedButton from '../../components/ThemedButton';
 import Modal from 'react-native-modal';
 import { Pressable } from 'react-native';
+import useWebSocket from '../../hooks/useWebSocket';
 
 export default function ParentDashboardScreen() {
   const [isModalVisible, setModalVisible] = useState(false);
@@ -15,6 +16,7 @@ export default function ParentDashboardScreen() {
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState<'pending' | 'approved'>('pending');
   const [parentCode, setParentCode] = useState<string | null>(null);
+  const lastMessage = useWebSocket(); // ✅ CORRECT
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -27,6 +29,14 @@ export default function ParentDashboardScreen() {
   useEffect(() => {
     fetchTasks();
   }, [filter]);
+
+
+  useEffect(() => {
+    console.log("📥 lastMessage changed:", lastMessage);
+    if (lastMessage) {
+      Alert.alert('Notification', lastMessage);
+    }
+  }, [lastMessage]);
 
   const fetchTasks = async () => {
     try {
@@ -56,7 +66,7 @@ export default function ParentDashboardScreen() {
   const handleApproveTask = async (taskId: number) => {
     try {
       const token = await AsyncStorage.getItem('token');
-      await api.put(`/tasks/${taskId}/complete`, null, {
+      await api.put(`/tasks/${taskId}/approve`, null, {
         headers: { Authorization: `Bearer ${token}` },
       });
       Alert.alert('Approved', 'Task has been approved!');
