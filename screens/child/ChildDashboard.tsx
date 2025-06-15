@@ -1,17 +1,19 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, Alert, Button } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Alert, Button, Pressable } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { API_BASE_URL } from '@env';
 import { themeStyles } from '../../styles/theme';
 import StatusBadge from '../../components/StatusBadge';
+import useWebSocket from '../../hooks/useWebSocket';
 
 export default function ChildDashboard() {
   const [user, setUser] = useState<any>(null);
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState<'pending' | 'approved'>('pending');
   const navigation = useNavigation<any>();
+  const { lastMessage } = useWebSocket();
 
   const fetchUser = async () => {
     try {
@@ -58,6 +60,7 @@ export default function ChildDashboard() {
     navigation.navigate('Login');
   };
 
+
   useEffect(() => {
     fetchUser();
   }, []);
@@ -71,6 +74,13 @@ export default function ChildDashboard() {
       fetchTasks();
     }, [])
   );
+
+  useEffect(() => {
+    if (lastMessage) {
+      Alert.alert('Notification', lastMessage);
+      // You could also trigger a toast or badge here
+    }
+  }, [lastMessage]);
 
   return (
     <View style={themeStyles.container}>
@@ -111,11 +121,9 @@ export default function ChildDashboard() {
             </Text>
             {filter === 'pending' && item.status === 'pending' && (
               <View style={styles.buttonSpacing}>
-                <Button
-                  title="Mark Complete"
-                  onPress={() => handleComplete(item.id)}
-                  color="green"
-                />
+                <Pressable style={themeStyles.button} onPress={() => handleComplete(item.id)}>
+                  <Text style={themeStyles.buttonText}>Mark Complete</Text>
+                </Pressable>
               </View>
             )}
           </View>

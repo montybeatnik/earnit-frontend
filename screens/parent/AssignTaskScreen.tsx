@@ -39,7 +39,19 @@ export default function AssignTaskScreen() {
         fetchData();
     }, []);
 
+    useEffect(() => {
+        console.log('▶ useEffect [children] triggered');
+        console.log('children.length:', children.length);
+        console.log('selectedChildId BEFORE:', selectedChildId);
+        if (children.length === 1 && !selectedChildId) {
+            console.log('Auto-selecting child ID:', children[0].ID);
+            setSelectedChildId(children[0].ID);
+        }
+    }, [children]);
+
     const handleAssign = async () => {
+        console.log('DEBUG selectedTaskId:', selectedTaskId);
+        console.log('DEBUG selectedChildId:', selectedChildId);
         if (!selectedTaskId || !selectedChildId) {
             Alert.alert('Missing Info', 'Please select a task and child.');
             return;
@@ -70,6 +82,7 @@ export default function AssignTaskScreen() {
                     <DropdownPicker
                         label="Select Child"
                         selectedValue={selectedChildId}
+                        // options={children.map((child) => ({ label: child.name, value: child.ID }))}
                         options={children.map((child) => ({ label: child.name, value: child.ID }))}
                         onSelect={setSelectedChildId}
                         visible={childDropdownVisible}
