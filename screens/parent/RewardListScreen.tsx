@@ -1,13 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, FlatList, StyleSheet, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import {
+    View,
+    Text,
+    Alert,
+    FlatList,
+    ImageBackground,
+    Animated,
+    Easing,
+    StyleSheet,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../../services/api';
-import ThemedButton from '../../components/ThemedButton';
+import { themeStyles } from '../../styles/theme';
+import FloatingActionButton from '../../components/FloatingActionButton';
 
-export default function RewardListScreen() {
-    const navigation = useNavigation<any>();
+export default function RewardsScreen({ navigation }) {
     const [rewards, setRewards] = useState([]);
+    const scaleAnim = useState(new Animated.Value(1))[0];
+    const background = require('../../assets/rewards-bg.png');
+
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('focus', () => {
+            fetchRewards();
+        });
+        return unsubscribe;
+    }, [navigation]);
 
     const fetchRewards = async () => {
         try {
@@ -17,50 +34,70 @@ export default function RewardListScreen() {
             });
             setRewards(res.data.rewards);
         } catch (err) {
-            console.error(err);
-            Alert.alert('Failed to load rewards');
+            console.error('Failed to fetch rewards:', err);
+            Alert.alert('Error', 'Could not load rewards');
         }
     };
 
-    useEffect(() => {
-        const unsubscribe = navigation.addListener('focus', fetchRewards);
-        return unsubscribe;
-    }, [navigation]);
+    const animateSuccess = () => {
+        Animated.sequence([
+            Animated.timing(scaleAnim, {
+                toValue: 1.1,
+                duration: 150,
+                easing: Easing.out(Easing.ease),
+                useNativeDriver: true,
+            }),
+            Animated.timing(scaleAnim, {
+                toValue: 1,
+                duration: 150,
+                easing: Easing.in(Easing.ease),
+                useNativeDriver: true,
+            }),
+        ]).start();
+    };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.header}>🎁 Rewards</Text>
+        <ImageBackground source={background} style={StyleSheet.absoluteFill} resizeMode="cover">
+            <View style={[themeStyles.fullScreenOverlay, { flex: 1 }]}>
+                <Text style={themeStyles.screenHeader}>🎁 Rewards</Text>
 
-            <FlatList
-                data={rewards}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => (
-                    <View style={styles.card}>
-                        <Text style={styles.title}>{item.title}</Text>
-                        <Text>{item.description}</Text>
-                        <Text style={styles.cost}>{item.cost} pts</Text>
-                    </View>
-                )}
-            />
+                <FlatList
+                    data={rewards}
+                    keyExtractor={(item) => item.id.toString()}
+                    contentContainerStyle={{ paddingBottom: 120 }}
+                    ListEmptyComponent={
+                        <Text style={themeStyles.bodyCenter}>No rewards available.</Text>
+                    }
+                    renderItem={({ item }) => (
+                        <Animated.View
+                            style={[
+                                themeStyles.card,
+                                {
+                                    transform: [{ scale: scaleAnim }],
+                                    marginBottom: 12,
+                                },
+                            ]}
+                        >
+                            <Text style={themeStyles.title}>{item.title}</Text>
+                            <Text style={themeStyles.subtitle}>{item.description}</Text>
+                            <Text style={themeStyles.body}>🎯 {item.cost} points</Text>
+                        </Animated.View>
+                    )}
+                />
+            </View>
 
-            <ThemedButton
-                title="Create New Reward"
-                onPress={() => navigation.navigate('CreateReward')}
-            />
-        </View>
+            <View style={styles.fabContainer}>
+                <FloatingActionButton onPress={() => navigation.navigate('CreateReward')} />
+            </View>
+        </ImageBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 20 },
-    header: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-    card: {
-        padding: 12,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 6,
-        marginBottom: 10,
+    fabContainer: {
+        position: 'absolute',
+        bottom: 24,
+        right: 24,
+        zIndex: 999,
     },
-    title: { fontWeight: 'bold', fontSize: 16 },
-    cost: { fontStyle: 'italic', color: 'green' },
 });

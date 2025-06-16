@@ -4,6 +4,7 @@ import ChildDashboard from '../screens/child/ChildDashboard';
 import RewardShopScreen from '../screens/child/RewardShopScreen';
 import ChildLoginScreen from '../screens/child/ChildLoginScreen';
 import RewardCelebrationScreen from '../screens/child/RewardCelebrationScreen';
+import CompleteTaskScreen from '../screens/child/CompleteTaskScreen'
 
 const Stack = createNativeStackNavigator();
 
@@ -13,6 +14,7 @@ export default function ChildNavigator() {
             <Stack.Screen name="ChildDashboard" component={ChildDashboard} />
             <Stack.Screen name="RewardShop" component={RewardShopScreen} />
             <Stack.Screen name="ChildLogin" component={ChildLoginScreen} />
+            <Stack.Screen name="CompleteTask" component={CompleteTaskScreen} />
             <Stack.Screen
                 name="RewardCelebration"
                 component={RewardCelebrationScreen}

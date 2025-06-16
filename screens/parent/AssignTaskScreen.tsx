@@ -1,9 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Alert, Pressable } from 'react-native';
+import {
+    View,
+    Text,
+    Alert,
+    Pressable,
+    ImageBackground,
+    Animated,
+    Easing,
+    StyleSheet,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../../services/api';
 import { themeStyles } from '../../styles/theme';
 import DropdownPicker from '../../components/DropdownPicker';
+import FloatingActionButton from '../../components/FloatingActionButton';
+
 
 export default function AssignTaskScreen() {
     const [children, setChildren] = useState([]);
@@ -13,6 +24,9 @@ export default function AssignTaskScreen() {
 
     const [childDropdownVisible, setChildDropdownVisible] = useState(false);
     const [taskDropdownVisible, setTaskDropdownVisible] = useState(false);
+
+    const background = require('../../assets/assign-task-bg.png');
+    const scaleAnim = useState(new Animated.Value(1))[0];
 
     useEffect(() => {
         const fetchData = async () => {
@@ -26,8 +40,6 @@ export default function AssignTaskScreen() {
                     setSelectedChildId(childRes.data.children[0].ID);
                 }
 
-                console.log('Children:', childRes.data.children);
-
                 const taskRes = await api.get('/boilerplate/tasks', { headers });
                 setTasks(taskRes.data.tasks);
             } catch (err) {
@@ -39,19 +51,24 @@ export default function AssignTaskScreen() {
         fetchData();
     }, []);
 
-    useEffect(() => {
-        console.log('▶ useEffect [children] triggered');
-        console.log('children.length:', children.length);
-        console.log('selectedChildId BEFORE:', selectedChildId);
-        if (children.length === 1 && !selectedChildId) {
-            console.log('Auto-selecting child ID:', children[0].ID);
-            setSelectedChildId(children[0].ID);
-        }
-    }, [children]);
+    const triggerAnimation = () => {
+        Animated.sequence([
+            Animated.timing(scaleAnim, {
+                toValue: 1.2,
+                duration: 150,
+                easing: Easing.out(Easing.ease),
+                useNativeDriver: true,
+            }),
+            Animated.timing(scaleAnim, {
+                toValue: 1,
+                duration: 150,
+                easing: Easing.in(Easing.ease),
+                useNativeDriver: true,
+            }),
+        ]).start();
+    };
 
     const handleAssign = async () => {
-        console.log('DEBUG selectedTaskId:', selectedTaskId);
-        console.log('DEBUG selectedChildId:', selectedChildId);
         if (!selectedTaskId || !selectedChildId) {
             Alert.alert('Missing Info', 'Please select a task and child.');
             return;
@@ -64,7 +81,9 @@ export default function AssignTaskScreen() {
                 { template_id: selectedTaskId, assigned_to_id: selectedChildId },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            Alert.alert('Success', 'Task assigned!');
+
+            triggerAnimation();
+            Alert.alert('✅ Success!', 'Task assigned!');
             setSelectedTaskId(null);
             if (children.length > 1) setSelectedChildId(null);
         } catch (err) {
@@ -74,35 +93,55 @@ export default function AssignTaskScreen() {
     };
 
     return (
-        <View style={themeStyles.fullScreenContainer}>
-            <Text style={themeStyles.screenHeader}>Assign a Task</Text>
+        <ImageBackground
+            source={background}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+        >
+            <View style={[themeStyles.fullScreenOverlay]}>
+                <Text style={themeStyles.screenHeader}>📝 Assign a Task</Text>
 
-            <View style={themeStyles.buttonGroup}>
-                {children.length > 1 && (
+                <View style={themeStyles.buttonGroup}>
+                    {children.length > 1 && (
+                        <DropdownPicker
+                            label="Select Child"
+                            selectedValue={selectedChildId}
+                            options={children.map((child) => ({
+                                label: child.name,
+                                value: child.ID,
+                            }))}
+                            onSelect={setSelectedChildId}
+                            visible={childDropdownVisible}
+                            setVisible={setChildDropdownVisible}
+                        />
+                    )}
+
                     <DropdownPicker
-                        label="Select Child"
-                        selectedValue={selectedChildId}
-                        // options={children.map((child) => ({ label: child.name, value: child.ID }))}
-                        options={children.map((child) => ({ label: child.name, value: child.ID }))}
-                        onSelect={setSelectedChildId}
-                        visible={childDropdownVisible}
-                        setVisible={setChildDropdownVisible}
+                        label="Select Task"
+                        selectedValue={selectedTaskId}
+                        options={tasks.map((task) => ({
+                            label: task.title,
+                            value: task.id,
+                        }))}
+                        onSelect={setSelectedTaskId}
+                        visible={taskDropdownVisible}
+                        setVisible={setTaskDropdownVisible}
                     />
-                )}
 
-                <DropdownPicker
-                    label="Select Task"
-                    selectedValue={selectedTaskId}
-                    options={tasks.map((task) => ({ label: task.title, value: task.id }))}
-                    onSelect={setSelectedTaskId}
-                    visible={taskDropdownVisible}
-                    setVisible={setTaskDropdownVisible}
-                />
 
-                <Pressable onPress={handleAssign} style={themeStyles.button}>
-                    <Text style={themeStyles.buttonText}>Assign Task</Text>
-                </Pressable>
+                    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+                        <Pressable style={themeStyles.button} onPress={handleAssign}>
+                            <Text style={themeStyles.buttonText}>Assign Task</Text>
+                        </Pressable>
+                    </Animated.View>
+
+                </View>
+                {/* you're using a different approach (hard coded) on the dashboard
+                  You'll probably want to add some conditionals to not present an 
+                  option for the current screen. 
+                 */}
+                <FloatingActionButton onPress={() => Alert.alert('Quick Action!')} />
             </View>
-        </View>
+        </ImageBackground>
     );
 }

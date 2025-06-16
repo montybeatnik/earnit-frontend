@@ -10,7 +10,7 @@ import useWebSocket from '../../hooks/useWebSocket';
 import { ScrollView, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Modal from 'react-native-modal';
-
+import ThemedButton from '../../components/ThemedButton';
 
 
 export default function ChildDashboard() {
@@ -153,8 +153,17 @@ export default function ChildDashboard() {
                       </Text>
                     </View>
 
+                    {/* {item.status === 'in_progress' && (
+                      <ThemedButton
+                        title="Submit Task"
+                        onPress={() => navigation.navigate('CompleteTask', { taskId: item.id })}
+                      />
+                    )} */}
+
+
+                    {/* navigation.navigate('CompleteTask', { taskId: item.id })} */}
                     {filter === 'pending' && item.status === 'pending' && (
-                      <Pressable style={styles.completeButton} onPress={() => handleComplete(item.id)}>
+                      <Pressable style={styles.completeButton} onPress={() => navigation.navigate('CompleteTask', { taskId: item.id })}>
                         <Text style={styles.completeButtonText}>Mark Complete ✅</Text>
                       </Pressable>
                     )}
@@ -228,8 +237,8 @@ export default function ChildDashboard() {
           </Modal>
 
         </View>
-      </LinearGradient>
-    </ImageBackground>
+      </LinearGradient >
+    </ImageBackground >
   );
 }
 

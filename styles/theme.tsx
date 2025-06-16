@@ -194,6 +194,12 @@ export const themeStyles = StyleSheet.create({
         marginBottom: spacing.lg,
         width: '100%',
     },
+    fullScreenOverlay: {
+        flex: 1,
+        padding: 20,
+        justifyContent: 'center',
+        // remove backgroundColor from here if it exists
+    },
 });
 
 export const themedStyles = (

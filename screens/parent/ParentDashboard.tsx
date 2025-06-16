@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  Alert,
+  Pressable,
+  ImageBackground,
+  Image,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { api } from '../../services/api';
@@ -7,8 +15,11 @@ import { themeStyles, colors } from '../../styles/theme';
 import StatusBadge from '../../components/StatusBadge';
 import ThemedButton from '../../components/ThemedButton';
 import Modal from 'react-native-modal';
-import { Pressable } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import useWebSocket from '../../hooks/useWebSocket';
+import { API_BASE_URL } from '@env';
+
+const background = require('../../assets/parent-bg.png'); // Add a background image here
 
 export default function ParentDashboardScreen() {
   const [isModalVisible, setModalVisible] = useState(false);
@@ -16,7 +27,7 @@ export default function ParentDashboardScreen() {
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState<'pending' | 'approved'>('pending');
   const [parentCode, setParentCode] = useState<string | null>(null);
-  const lastMessage = useWebSocket(); // ✅ CORRECT
+  const lastMessage = useWebSocket();
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -30,9 +41,7 @@ export default function ParentDashboardScreen() {
     fetchTasks();
   }, [filter]);
 
-
   useEffect(() => {
-    console.log("📥 lastMessage changed:", lastMessage);
     if (lastMessage) {
       Alert.alert('Notification', lastMessage);
     }
@@ -78,115 +87,151 @@ export default function ParentDashboardScreen() {
   };
 
   return (
-    <View style={themeStyles.fullScreenContainer}>
-      <Text style={themeStyles.screenHeader}>👩‍👧 Parent Dashboard</Text>
+    <ImageBackground source={background} style={{ flex: 1 }} resizeMode="cover">
+      <LinearGradient colors={['#ffffffcc', '#fff0']} style={{ flex: 1, padding: 16 }}>
+        <Text style={themeStyles.screenHeader}>👩‍👧 Parent Dashboard</Text>
 
-      {parentCode && (
-        <View style={themeStyles.codeBoxContainer}>
-          <Text style={themeStyles.codeBoxTitle}>Your Parent Code</Text>
-          <Text style={themeStyles.codeBoxValue}>{parentCode}</Text>
-        </View>
-      )}
-
-      <View style={themeStyles.row}>
-        <ThemedButton
-          title="Current"
-          onPress={() => setFilter('pending')}
-          color={filter === 'pending' ? colors.primary : colors.gray}
-        />
-        <ThemedButton
-          title="History"
-          onPress={() => setFilter('approved')}
-          color={filter === 'approved' ? colors.primary : colors.gray}
-        />
-      </View>
-
-      <FlatList
-        data={tasks}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ paddingBottom: 120 }}
-        ListEmptyComponent={
-          <Text style={themeStyles.bodyCenter}>
-            {filter === 'approved' ? 'No completed tasks yet' : 'No current tasks'}
-          </Text>
-        }
-        renderItem={({ item }) => (
-          <View style={themeStyles.card}>
-            <Text style={themeStyles.title}>{item.title}</Text>
-            <Text style={themeStyles.small}>Assigned to: {item.assigned_to_name}</Text>
-            <Text style={themeStyles.subtitle}>{item.description}</Text>
-
-            <View style={{ marginTop: 8 }}>
-              <Text style={themeStyles.body}>🏆 {item.points} points</Text>
-              <StatusBadge status={item.status} />
-              <Text style={themeStyles.small}>
-                Created: {new Date(item.created_at).toLocaleDateString()} @{' '}
-                {new Date(item.created_at).toLocaleTimeString()}
-              </Text>
-            </View>
-
-            {filter === 'pending' && item.status?.toLowerCase() === 'awaiting_approval' && (
-              <View style={themeStyles.buttonGroup}>
-                <ThemedButton
-                  title="Approve Task"
-                  onPress={() => handleApproveTask(item.id)}
-                  color={colors.secondary}
-                />
-              </View>
-            )}
+        {parentCode && (
+          <View style={{
+            backgroundColor: '#FEF9C3',
+            borderRadius: 16,
+            padding: 16,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 6,
+            elevation: 3,
+            marginVertical: 16,
+            alignItems: 'center',
+          }}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#92400E' }}>
+              👨‍👩‍👧 Parent Code
+            </Text>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#92400E' }}>
+              {parentCode}
+            </Text>
           </View>
         )}
-      />
-      <Pressable
-        onPress={() => setModalVisible(true)}
-        style={{
-          position: 'absolute',
-          bottom: 30,
-          right: 20,
-          backgroundColor: colors.primary,
-          borderRadius: 30,
-          padding: 16,
-          elevation: 5,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.3,
-          shadowRadius: 4,
-        }}
-      >
-        <Text style={{ color: 'white', fontSize: 24, fontWeight: 'bold' }}>＋</Text>
-      </Pressable>
-      <Modal
-        isVisible={isModalVisible}
-        onBackdropPress={() => setModalVisible(false)}
-        style={{ justifyContent: 'flex-end', margin: 0 }}
-      >
-        <View style={{
-          backgroundColor: colors.background,
-          padding: 20,
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16,
-        }}>
-          <Text style={[themeStyles.subtitle, { marginBottom: 12, textAlign: 'center' }]}>Quick Actions</Text>
-          <ThemedButton title="Assign Task" onPress={() => {
-            setModalVisible(false);
-            navigation.navigate('AssignTask');
-          }} />
-          <ThemedButton title="Create New Task" onPress={() => {
-            setModalVisible(false);
-            navigation.navigate('CreateTaskTemplate');
-          }} />
-          <ThemedButton title="Manage Rewards" onPress={() => {
-            setModalVisible(false);
-            navigation.navigate('Rewards');
-          }} />
-          <ThemedButton title="Log Out" color={colors.danger} onPress={async () => {
-            await AsyncStorage.removeItem('token');
-            Alert.alert('Logged out');
-            navigation.navigate('Login');
-          }} />
-        </View>
-      </Modal>
-    </View>
 
+        <View style={themeStyles.row}>
+          <ThemedButton
+            title="Current"
+            onPress={() => setFilter('pending')}
+            color={filter === 'pending' ? colors.primary : colors.gray}
+          />
+          <ThemedButton
+            title="History"
+            onPress={() => setFilter('approved')}
+            color={filter === 'approved' ? colors.primary : colors.gray}
+          />
+        </View>
+
+        <FlatList
+          data={tasks}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={{ paddingBottom: 120 }}
+          ListEmptyComponent={
+            <Text style={themeStyles.bodyCenter}>
+              {filter === 'approved' ? 'No completed tasks yet' : 'No current tasks'}
+            </Text>
+          }
+          renderItem={({ item }) => (
+            <View style={themeStyles.card}>
+              <Text style={themeStyles.title}>{item.title}</Text>
+              <Text style={themeStyles.small}>Assigned to: {item.assigned_to_name}</Text>
+              <Text style={themeStyles.subtitle}>{item.description}</Text>
+              {item.photo_url && (
+                <View style={{ marginVertical: 8, alignItems: 'center' }}>
+                  <Text style={[themeStyles.small, { marginBottom: 4 }]}>📸 Submitted Photo:</Text>
+                  <Image
+                    source={{ uri: `${API_BASE_URL}/${item.photo_url.replace(/^\/+/, '')}` }}
+                    style={{
+                      width: 220,
+                      height: 220,
+                      borderRadius: 12,
+                      borderWidth: 1,
+                      borderColor: '#ccc',
+                      resizeMode: 'cover',
+                    }}
+                  />
+                </View>
+              )}
+
+              <View style={{ marginTop: 8 }}>
+                <Text style={themeStyles.body}>🏆 {item.points} points</Text>
+                <StatusBadge status={item.status} />
+                <Text style={themeStyles.small}>
+                  Created: {new Date(item.created_at).toLocaleDateString()} @{' '}
+                  {new Date(item.created_at).toLocaleTimeString()}
+                </Text>
+              </View>
+
+
+              {filter === 'pending' && item.status?.toLowerCase() === 'awaiting_approval' && (
+                <View style={themeStyles.buttonGroup}>
+                  <ThemedButton
+                    title="Approve Task"
+                    onPress={() => handleApproveTask(item.id)}
+                    color={colors.secondary}
+                  />
+                </View>
+              )}
+            </View>
+          )}
+        />
+
+        {/* FAB */}
+        <Pressable
+          onPress={() => setModalVisible(true)}
+          style={{
+            position: 'absolute',
+            bottom: 30,
+            right: 20,
+            backgroundColor: '#3B82F6',
+            borderRadius: 30,
+            padding: 16,
+            elevation: 5,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.3,
+            shadowRadius: 4,
+          }}
+        >
+          <Text style={{ color: 'white', fontSize: 24, fontWeight: 'bold' }}>＋</Text>
+        </Pressable>
+
+        <Modal
+          isVisible={isModalVisible}
+          onBackdropPress={() => setModalVisible(false)}
+          style={{ justifyContent: 'flex-end', margin: 0 }}
+        >
+          <View style={{
+            backgroundColor: colors.background,
+            padding: 20,
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+          }}>
+            <Text style={[themeStyles.subtitle, { marginBottom: 12, textAlign: 'center' }]}>Quick Actions</Text>
+            <ThemedButton title="Assign Task" onPress={() => {
+              setModalVisible(false);
+              navigation.navigate('AssignTask');
+            }} />
+            <ThemedButton title="Create New Task" onPress={() => {
+              setModalVisible(false);
+              navigation.navigate('CreateTaskTemplate');
+            }} />
+            <ThemedButton title="Manage Rewards" onPress={() => {
+              setModalVisible(false);
+              navigation.navigate('Rewards');
+            }} />
+            <ThemedButton title="Log Out" color={colors.danger} onPress={async () => {
+              await AsyncStorage.removeItem('token');
+              Alert.alert('Logged out');
+              navigation.navigate('Login');
+            }} />
+          </View>
+        </Modal>
+      </LinearGradient>
+    </ImageBackground>
   );
 }

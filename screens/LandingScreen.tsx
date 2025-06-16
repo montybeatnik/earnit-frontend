@@ -1,112 +1,62 @@
-import React, { useState } from 'react';
+import React from 'react';
+import {
+    View,
+    Text,
+    ImageBackground,
+    Pressable,
+    StyleSheet,
+    Platform,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { View, Text, TextInput, Button, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
+import { themeStyles, spacing, typography, colors } from '../styles/theme';
+
+const background = require('../../assets/landing-bg.png');
 
 export default function LandingScreen() {
     const navigation = useNavigation<any>();
-    const [email, setEmail] = useState('');
-
-
-    const handleSubscribe = () => {
-        // You can wire this to your backend or a newsletter service
-        Alert.alert('🎉 Thank you!', 'You’re on the early access list.');
-        setEmail('');
-    };
 
     return (
-        <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-            <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-                <Text style={styles.header}>Teach Kids Responsibility — And Let Them Earn Their Screen Time</Text>
-                <Text style={styles.subheader}>A playful app that helps families build better habits together.</Text>
+        <ImageBackground source={background} style={StyleSheet.absoluteFill} resizeMode="cover">
+            <View style={[themeStyles.fullScreenOverlay, styles.container]}>
+                <Text style={[typography.title, styles.header]}>Welcome to EarnIt!</Text>
+                <Text style={[typography.subtitle, styles.subtitle]}>Gamified chores, joyful rewards.</Text>
 
-                <TextInput
-                    value={email}
-                    onChangeText={setEmail}
-                    placeholder="Enter your email"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    style={styles.input}
-                />
-                <TouchableOpacity
-                    style={styles.button}
-                    onPress={() => navigation.navigate('Register', { email })}
-                >
-                    <Text style={styles.buttonText}>Join Early Access</Text>
-                </TouchableOpacity>
+                <Pressable style={themeStyles.button} onPress={() => navigation.navigate('RoleSelection')}>
+                    <Text style={themeStyles.buttonText}>Create Account</Text>
+                </Pressable>
 
-                <View style={styles.features}>
-                    <Text style={styles.featureTitle}>How It Works</Text>
-                    <Text style={styles.featureItem}>• Create tasks for kids to complete</Text>
-                    <Text style={styles.featureItem}>• Kids earn points for completing tasks</Text>
-                    <Text style={styles.featureItem}>• Redeem points for screen time, money, or other rewards</Text>
-                </View>
+                <Pressable style={themeStyles.button} onPress={() => navigation.navigate('Login')}>
+                    <Text style={themeStyles.buttonText}>Log In</Text>
+                </Pressable>
 
-                <Text style={styles.footer}>Built for families. Backed by values.</Text>
-            </ScrollView>
-        </KeyboardAvoidingView>
+                {/* Dev access button for easier testing */}
+                {__DEV__ && (
+                    <Pressable
+                        style={[themeStyles.button, { backgroundColor: colors.secondary }]}
+                        onPress={() => navigation.navigate('Landing')}
+                    >
+                        <Text style={themeStyles.buttonText}>🔧 Go to Landing Page (DEV)</Text>
+                    </Pressable>
+                )}
+            </View>
+        </ImageBackground>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        flexGrow: 1,
-        padding: 24,
         justifyContent: 'center',
-        backgroundColor: '#f9f9f9',
+        alignItems: 'center',
+        padding: spacing.lg,
     },
     header: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 12,
+        marginBottom: spacing.lg,
+        color: colors.primary,
         textAlign: 'center',
     },
-    subheader: {
-        fontSize: 16,
+    subtitle: {
+        marginBottom: spacing.xl,
+        color: colors.grayDark,
         textAlign: 'center',
-        marginBottom: 20,
     },
-    input: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 6,
-        padding: 12,
-        marginBottom: 16,
-        backgroundColor: '#fff',
-    },
-    features: {
-        marginTop: 32,
-    },
-    featureTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        marginBottom: 8,
-    },
-    featureItem: {
-        fontSize: 16,
-        marginBottom: 4,
-    },
-    footer: {
-        marginTop: 40,
-        fontSize: 14,
-        textAlign: 'center',
-        color: '#777',
-    },
-
-    button: {
-        backgroundColor: '#007AFF',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 8,
-        marginTop: 20,
-    },
-    buttonText: {
-        color: 'white',
-        fontSize: 16,
-        fontWeight: 'bold',
-        textAlign: 'center',
-    }
-
 });

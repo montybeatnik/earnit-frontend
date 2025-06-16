@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Pressable, Alert } from 'react-native';
+import {
+    View,
+    Text,
+    TextInput,
+    Pressable,
+    Alert,
+    ImageBackground,
+    ScrollView,
+} from 'react-native';
 import axios from 'axios';
 import { API_BASE_URL } from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { themeStyles, typography, spacing, colors } from '../../styles/theme';
+import FloatingActionButton from '../../components/FloatingActionButton';
 
 export default function CreateTaskScreen() {
     const [title, setTitle] = useState('');
@@ -13,15 +22,14 @@ export default function CreateTaskScreen() {
     const [children, setChildren] = useState([]);
     const [selectedChildIds, setSelectedChildIds] = useState<string[]>([]);
     const navigation = useNavigation<any>();
+    const background = require('../../assets/create-task-bg.png');
 
     useEffect(() => {
         const fetchChildren = async () => {
             try {
                 const token = await AsyncStorage.getItem('token');
                 const res = await axios.get(`${API_BASE_URL}/children`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                    headers: { Authorization: `Bearer ${token}` },
                 });
                 setChildren(res.data.children || []);
             } catch (err) {
@@ -53,14 +61,11 @@ export default function CreateTaskScreen() {
             await Promise.all(
                 selectedChildIds.map((idStr) => {
                     const assignedToId = parseInt(idStr, 10);
-                    return axios.post(`${API_BASE_URL}/tasks`, {
-                        title,
-                        description,
-                        points: pointsInt,
-                        assigned_to_id: assignedToId,
-                    }, {
-                        headers: { Authorization: `Bearer ${token}` },
-                    });
+                    return axios.post(
+                        `${API_BASE_URL}/tasks`,
+                        { title, description, points: pointsInt, assigned_to_id: assignedToId },
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
                 })
             );
 
@@ -76,74 +81,71 @@ export default function CreateTaskScreen() {
     };
 
     return (
-        <View style={themeStyles.fullScreenContainer}>
-            <Text style={[typography.title, { textAlign: 'center', marginBottom: spacing.lg }]}>
-                Create Task
-            </Text>
+        <ImageBackground source={background} style={{ flex: 1 }} resizeMode="cover">
+            <ScrollView contentContainerStyle={themeStyles.fullScreenOverlay}>
+                <Text style={[typography.title, { textAlign: 'center', marginBottom: spacing.lg }]}>Create a Task</Text>
 
-            <TextInput
-                placeholder="Task Title"
-                value={title}
-                onChangeText={setTitle}
-                style={themeStyles.input}
-            />
+                <TextInput
+                    placeholder="Task Title"
+                    value={title}
+                    onChangeText={setTitle}
+                    style={themeStyles.input}
+                />
 
-            <TextInput
-                placeholder="Description"
-                value={description}
-                onChangeText={setDescription}
-                style={themeStyles.input}
-            />
+                <TextInput
+                    placeholder="Description"
+                    value={description}
+                    onChangeText={setDescription}
+                    style={themeStyles.input}
+                />
 
-            <TextInput
-                placeholder="Points"
-                value={points}
-                onChangeText={setPoints}
-                keyboardType="numeric"
-                style={themeStyles.input}
-            />
+                <TextInput
+                    placeholder="Points"
+                    value={points}
+                    onChangeText={setPoints}
+                    keyboardType="numeric"
+                    style={themeStyles.input}
+                />
 
-            <Text style={[typography.subtitle, { marginTop: spacing.lg }]}>Assign To:</Text>
+                <Text style={[typography.subtitle, { marginTop: spacing.lg }]}>Assign To:</Text>
 
-            {children.length === 0 ? (
-                <Text style={themeStyles.bodyCenter}>No children found.</Text>
-            ) : (
-                <View style={{ width: '100%', marginTop: spacing.sm }}>
-                    {children.map((child) => {
-                        const idStr = child.id?.toString() || child.ID?.toString();
-                        const isSelected = selectedChildIds.includes(idStr);
+                {children.length === 0 ? (
+                    <Text style={themeStyles.bodyCenter}>No children found.</Text>
+                ) : (
+                    <View style={{ width: '100%', marginTop: spacing.sm }}>
+                        {children.map((child) => {
+                            const idStr = child.id?.toString() || child.ID?.toString();
+                            const isSelected = selectedChildIds.includes(idStr);
 
-                        return (
-                            <Pressable
-                                key={idStr}
-                                onPress={() => toggleChild(idStr)}
-                                style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    paddingVertical: 8,
-                                }}
-                            >
-                                <View
-                                    style={{
-                                        width: 20,
-                                        height: 20,
-                                        borderRadius: 4,
-                                        borderWidth: 2,
-                                        borderColor: isSelected ? colors.primary : colors.gray,
-                                        backgroundColor: isSelected ? colors.primary : 'transparent',
-                                        marginRight: 12,
-                                    }}
-                                />
-                                <Text style={typography.body}>{child.name}</Text>
-                            </Pressable>
-                        );
-                    })}
-                </View>
-            )}
+                            return (
+                                <Pressable
+                                    key={idStr}
+                                    onPress={() => toggleChild(idStr)}
+                                    style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8 }}
+                                >
+                                    <View
+                                        style={{
+                                            width: 20,
+                                            height: 20,
+                                            borderRadius: 4,
+                                            borderWidth: 2,
+                                            borderColor: isSelected ? colors.primary : colors.gray,
+                                            backgroundColor: isSelected ? colors.primary : 'transparent',
+                                            marginRight: 12,
+                                        }}
+                                    />
+                                    <Text style={typography.body}>{child.name}</Text>
+                                </Pressable>
+                            );
+                        })}
+                    </View>
+                )}
 
-            <Pressable onPress={handleCreate} style={themeStyles.button}>
-                <Text style={themeStyles.buttonText}>Create</Text>
-            </Pressable>
-        </View>
+                <Pressable onPress={handleCreate} style={[themeStyles.button, { marginTop: spacing.lg }]}>
+                    <Text style={themeStyles.buttonText}>Create Task</Text>
+                </Pressable>
+            </ScrollView>
+            <FloatingActionButton onPress={() => Alert.alert('Quick Action')} />
+        </ImageBackground>
     );
 }
