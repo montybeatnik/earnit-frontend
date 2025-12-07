@@ -11,12 +11,10 @@ import {
     Pressable,
 } from 'react-native';
 import Modal from 'react-native-modal';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import axios from 'axios';
-import { API_BASE_URL } from '@env';
 import { api } from '../../services/api';
 import { themeStyles, colors, spacing, typography } from '../../styles/theme';
+import { clearSession } from '../../services/session';
 
 export default function RewardShopScreen() {
     const [rewards, setRewards] = useState([]);
@@ -30,10 +28,7 @@ export default function RewardShopScreen() {
 
     const fetchUser = async () => {
         try {
-            const token = await AsyncStorage.getItem('token');
-            const res = await axios.get(`${API_BASE_URL}/me`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const res = await api.get(`/me`);
             setUser(res.data.user);
         } catch (err) {
             console.error(err);
@@ -42,10 +37,7 @@ export default function RewardShopScreen() {
 
     const fetchRewards = async () => {
         try {
-            const token = await AsyncStorage.getItem('token');
-            const res = await api.get('/rewards', {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const res = await api.get('/rewards');
             setRewards(res.data.rewards);
         } catch (err) {
             console.error(err);
@@ -58,10 +50,14 @@ export default function RewardShopScreen() {
 
     const handleRedeem = async (reward: any) => {
         try {
-            const token = await AsyncStorage.getItem('token');
-            await api.post(`/rewards/${reward.id}/redeem`, null, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const rewardId = reward.id ?? reward.ID;
+            if (rewardId == null) {
+                Alert.alert('Oops', 'Reward is missing an ID.');
+                return;
+            }
+
+            const res = await api.post(`/rewards/${rewardId}/redeem`, null);
+            const redemption = res.data?.redemption;
 
             if (reward.type === 'screen_time') {
                 navigation.navigate('ScreenTimeEarned', { reward });
@@ -70,7 +66,7 @@ export default function RewardShopScreen() {
                 fetchRewards();
             }
 
-            navigation.navigate('RewardCelebration', { reward });
+            navigation.navigate('RewardCelebration', { reward, redemption });
         } catch (err: any) {
             console.error(err);
             Alert.alert('Oops', err.response?.data?.error || 'Redemption failed');
@@ -97,15 +93,30 @@ export default function RewardShopScreen() {
 
                 <FlatList
                     data={rewards}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item, idx) => (item.id ?? item.ID ?? idx).toString()}
                     onRefresh={fetchRewards}
                     refreshing={refreshing}
                     contentContainerStyle={{ paddingBottom: 120 }}
                     renderItem={({ item }) => (
                         <View style={styles.card}>
-                            <Text style={styles.rewardTitle}>{item.title}</Text>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Text style={styles.rewardTitle}>{item.title}</Text>
+                                <Text style={styles.typeBadge}>
+                                    {item.type === 'investment' ? 'Investment' : item.type === 'screen_time' ? 'Screen Time' : 'Tangible'}
+                                </Text>
+                            </View>
                             <Text style={styles.description}>{item.description}</Text>
                             <Text style={styles.cost}>Cost: {item.cost} pts</Text>
+                            {item.type === 'investment' && (
+                                <Text style={styles.small}>
+                                    Investment: {item.meta?.ticker || 'N/A'} • ${item.meta?.amount || 0}
+                                </Text>
+                            )}
+                            {item.type === 'screen_time' && (
+                                <Text style={styles.small}>
+                                    Screen Time: {item.meta?.duration_minutes || 0} mins
+                                </Text>
+                            )}
                             <Pressable
                                 style={[themeStyles.button, { marginTop: 12 }]}
                                 onPress={() => handleRedeem(item)}
@@ -135,25 +146,6 @@ export default function RewardShopScreen() {
                     <Text style={{ color: 'white', fontSize: 24, fontWeight: 'bold' }}>＋</Text>
                 </Pressable>
 
-                <Pressable
-                    onPress={() => setModalVisible(true)}
-                    style={{
-                        position: 'absolute',
-                        bottom: 30,
-                        right: 20,
-                        backgroundColor: '#3B82F6',
-                        borderRadius: 30,
-                        padding: 16,
-                        elevation: 5,
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.3,
-                        shadowRadius: 4,
-                    }}
-                >
-                    <Text style={{ color: 'white', fontSize: 24, fontWeight: 'bold' }}>＋</Text>
-                </Pressable>
-
                 <Modal
                     isVisible={isModalVisible}
                     onBackdropPress={() => setModalVisible(false)}
@@ -171,6 +163,26 @@ export default function RewardShopScreen() {
                             style={[themeStyles.button, { marginBottom: 12 }]}
                             onPress={() => {
                                 setModalVisible(false);
+                                navigation.navigate('MyRewards');
+                            }}
+                        >
+                            <Text style={themeStyles.buttonText}>📜 My Rewards</Text>
+                        </Pressable>
+
+                        <Pressable
+                            style={[themeStyles.button, { marginBottom: 12 }]}
+                            onPress={() => {
+                                setModalVisible(false);
+                                navigation.navigate('WeeklyRetro');
+                            }}
+                        >
+                            <Text style={themeStyles.buttonText}>🧠 Weekly Reflection</Text>
+                        </Pressable>
+
+                        <Pressable
+                            style={[themeStyles.button, { marginBottom: 12 }]}
+                            onPress={() => {
+                                setModalVisible(false);
                                 fetchRewards();
                             }}
                         >
@@ -180,8 +192,7 @@ export default function RewardShopScreen() {
                         <Pressable
                             style={[themeStyles.button, { backgroundColor: '#EF4444' }]}
                             onPress={async () => {
-                                await AsyncStorage.removeItem('token');
-                                await AsyncStorage.removeItem('role');
+                                await clearSession();
                                 Alert.alert('Logged out');
                                 setModalVisible(false);
                                 navigation.navigate('Login');
@@ -191,45 +202,6 @@ export default function RewardShopScreen() {
                         </Pressable>
                     </View>
                 </Modal>
-
-                <Modal
-                    isVisible={isModalVisible}
-                    onBackdropPress={() => setModalVisible(false)}
-                    style={{ justifyContent: 'flex-end', margin: 0 }}
-                >
-                    <View style={{
-                        backgroundColor: 'white',
-                        padding: 20,
-                        borderTopLeftRadius: 16,
-                        borderTopRightRadius: 16,
-                    }}>
-                        <Text style={[themeStyles.subtitle, { marginBottom: 12, textAlign: 'center' }]}>Quick Actions</Text>
-
-                        <Pressable
-                            style={[themeStyles.button, { marginBottom: 12 }]}
-                            onPress={() => {
-                                setModalVisible(false);
-                                navigation.navigate('RewardCelebration');
-                            }}
-                        >
-                            <Text style={themeStyles.buttonText}>🎉 Celebrate Reward</Text>
-                        </Pressable>
-
-                        <Pressable
-                            style={[themeStyles.button, { backgroundColor: '#EF4444' }]}
-                            onPress={async () => {
-                                await AsyncStorage.removeItem('token');
-                                await AsyncStorage.removeItem('role');
-                                Alert.alert('Logged out');
-                                setModalVisible(false);
-                                navigation.navigate('Login');
-                            }}
-                        >
-                            <Text style={themeStyles.buttonText}>🚪 Log Out</Text>
-                        </Pressable>
-                    </View>
-                </Modal>
-
             </View>
         </ImageBackground>
     );
@@ -283,5 +255,17 @@ const styles = StyleSheet.create({
         ...typography.small,
         color: colors.secondary,
         marginBottom: spacing.sm,
+    },
+    small: {
+        ...typography.small,
+    },
+    typeBadge: {
+        ...typography.small,
+        backgroundColor: colors.light,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.xs,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: colors.gray,
     },
 });

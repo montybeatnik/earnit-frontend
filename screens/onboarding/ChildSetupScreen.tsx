@@ -12,11 +12,9 @@ import {
     TouchableWithoutFeedback,
 } from 'react-native';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { themeStyles, typography, colors, spacing } from '../../styles/theme';
-import { API_BASE_URL } from '@env';
+import { api } from '../../services/api';
 
 interface Child {
     name: string;
@@ -39,10 +37,7 @@ export default function ChildSetupScreen() {
 
     const handleSubmit = async () => {
         try {
-            const token = await AsyncStorage.getItem('token');
-            const headers = { Authorization: `Bearer ${token}` };
-
-            await axios.post(`${API_BASE_URL}/children`, { children }, { headers });
+            await api.post(`/children`, { children });
             navigation.navigate('Parent' as never);
         } catch (err) {
             console.error('Failed to create children', err);

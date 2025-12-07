@@ -1,9 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, Alert, Pressable, Image } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { API_BASE_URL } from '@env';
 import { themeStyles } from '../../styles/theme';
 import StatusBadge from '../../components/StatusBadge';
 import useWebSocket from '../../hooks/useWebSocket';
@@ -11,6 +8,8 @@ import { ScrollView, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Modal from 'react-native-modal';
 import ThemedButton from '../../components/ThemedButton';
+import { api } from '../../services/api';
+import { clearSession } from '../../services/session';
 
 
 export default function ChildDashboard() {
@@ -24,10 +23,7 @@ export default function ChildDashboard() {
 
   const fetchUser = async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
-      const res = await axios.get(`${API_BASE_URL}/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get(`/me`);
       setUser(res.data.user);
     } catch (err) {
       console.error(err);
@@ -36,10 +32,7 @@ export default function ChildDashboard() {
 
   const fetchTasks = async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
-      const res = await axios.get(`${API_BASE_URL}/tasks?status=${filter}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get(`/tasks?status=${filter}`);
       setTasks(res.data.tasks);
     } catch (err) {
       console.error(err);
@@ -49,11 +42,7 @@ export default function ChildDashboard() {
 
   const handleComplete = async (taskId: number) => {
     try {
-      const token = await AsyncStorage.getItem('token');
-
-      await axios.put(`${API_BASE_URL}/tasks/${taskId}/submit`, null, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.put(`/tasks/${taskId}/submit`);
 
       Alert.alert('🎉 Submitted!', 'Your task is now waiting for approval.');
       fetchTasks();
@@ -64,8 +53,7 @@ export default function ChildDashboard() {
   };
 
   const handleLogout = async () => {
-    await AsyncStorage.removeItem('token');
-    await AsyncStorage.removeItem('role');
+    await clearSession();
     navigation.navigate('Login');
   };
 
@@ -111,6 +99,9 @@ export default function ChildDashboard() {
                     </View>
                     <Text style={styles.xpPoints}>
                       {user.points} / 100 XP
+                    </Text>
+                    <Text style={styles.streakText}>
+                      🔥 Streak: {user.current_streak || 0} days (best {user.longest_streak || 0})
                     </Text>
                   </View>
                 </View>
@@ -222,10 +213,29 @@ export default function ChildDashboard() {
               </Pressable>
 
               <Pressable
+                style={[themeStyles.button, { marginBottom: 12 }]}
+                onPress={() => {
+                  setModalVisible(false);
+                  navigation.navigate('MyRewards');
+                }}
+              >
+                <Text style={themeStyles.buttonText}>📜 My Rewards</Text>
+              </Pressable>
+
+              <Pressable
+                style={[themeStyles.button, { marginBottom: 12 }]}
+                onPress={() => {
+                  setModalVisible(false);
+                  navigation.navigate('WeeklyRetro');
+                }}
+              >
+                <Text style={themeStyles.buttonText}>🧠 Weekly Reflection</Text>
+              </Pressable>
+
+              <Pressable
                 style={[themeStyles.button, { backgroundColor: '#EF4444' }]}
                 onPress={async () => {
-                  await AsyncStorage.removeItem('token');
-                  await AsyncStorage.removeItem('role');
+                  await clearSession();
                   Alert.alert('Logged out');
                   setModalVisible(false);
                   navigation.navigate('Login');
@@ -333,6 +343,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
     color: '#1E40AF',
+  },
+  streakText: {
+    marginTop: 4,
+    fontSize: 12,
+    color: '#0F172A',
+    fontWeight: '600',
   },
   taskCard: {
     backgroundColor: '#F0F9FF',

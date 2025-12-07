@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import { API_BASE_URL } from '@env';
+import { getSession } from '../../services/session';
+import { api } from '../../services/api';
 
 export default function ParentChildLinkScreen() {
     const [role, setRole] = useState('');
@@ -11,8 +11,8 @@ export default function ParentChildLinkScreen() {
 
     useEffect(() => {
         // Retrieve role from storage
-        AsyncStorage.getItem('role').then((value) => {
-            if (value) setRole(value);
+        getSession().then(({ role }) => {
+            if (role) setRole(role);
         });
     }, []);
 
@@ -24,13 +24,7 @@ export default function ParentChildLinkScreen() {
             }
 
             try {
-                const res = await fetch(`${API_BASE_URL}/children/by-parent-code/${parentCode.trim()}`);
-
-                if (!res.ok) {
-                    throw new Error('Failed to fetch children');
-                }
-
-                const children = await res.json();
+                const { data: children } = await api.get(`/children/by-parent-code/${parentCode.trim()}`);
 
                 if (children.length === 0) {
                     Alert.alert('No matches', 'No children found for that code.');

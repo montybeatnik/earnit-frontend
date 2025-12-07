@@ -1,16 +1,15 @@
 import React from 'react';
 import { View, Button, StyleSheet, Text, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import axios from 'axios';
-import { API_BASE_URL } from '@env';
+import { api } from '../services/api';
+import { storeSession } from '../services/session';
 
 const DevSwitchUserScreen = () => {
     const navigation = useNavigation();
 
     const loginAs = async (email: string, password: string, role: 'parent' | 'child') => {
         try {
-            const response = await axios.post(`${API_BASE_URL}/login`, {
+            const response = await api.post(`/login`, {
                 email,
                 password,
             });
@@ -18,7 +17,7 @@ const DevSwitchUserScreen = () => {
             const token = response.data.token;
             console.log(`✅ Logged in as ${role}:`, token);
 
-            await AsyncStorage.setItem('token', token);
+            await storeSession(token, role);
 
             navigation.navigate(role === 'parent' ? 'Parent' : 'Child');
         } catch (err) {

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../../services/api';
 import { useNavigation } from '@react-navigation/native';
+import { decodeJwtPayload, storeSession } from '../../services/session';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -15,11 +15,9 @@ export default function LoginScreen() {
 
       const res = await api.post('/login', { email, password });
       const token = res.data.token;
-      await AsyncStorage.setItem('token', token);
-
-      // Decode token to get role (in real app, use a lib or backend decoding)
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const role = payload.role;
+      const payload = decodeJwtPayload(token);
+      const role = payload?.role || 'child';
+      await storeSession(token, role);
 
       if (role === 'parent') {
         navigation.navigate('Parent');

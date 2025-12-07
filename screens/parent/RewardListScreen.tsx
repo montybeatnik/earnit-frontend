@@ -9,7 +9,6 @@ import {
     Easing,
     StyleSheet,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../../services/api';
 import { themeStyles } from '../../styles/theme';
 import FloatingActionButton from '../../components/FloatingActionButton';
@@ -28,10 +27,7 @@ export default function RewardsScreen({ navigation }) {
 
     const fetchRewards = async () => {
         try {
-            const token = await AsyncStorage.getItem('token');
-            const res = await api.get('/rewards', {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const res = await api.get('/rewards');
             setRewards(res.data.rewards);
         } catch (err) {
             console.error('Failed to fetch rewards:', err);

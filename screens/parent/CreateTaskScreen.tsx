@@ -8,12 +8,10 @@ import {
     ImageBackground,
     ScrollView,
 } from 'react-native';
-import axios from 'axios';
-import { API_BASE_URL } from '@env';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { themeStyles, typography, spacing, colors } from '../../styles/theme';
 import FloatingActionButton from '../../components/FloatingActionButton';
+import { api } from '../../services/api';
 
 export default function CreateTaskScreen() {
     const [title, setTitle] = useState('');
@@ -27,10 +25,7 @@ export default function CreateTaskScreen() {
     useEffect(() => {
         const fetchChildren = async () => {
             try {
-                const token = await AsyncStorage.getItem('token');
-                const res = await axios.get(`${API_BASE_URL}/children`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                const res = await api.get(`/children`);
                 setChildren(res.data.children || []);
             } catch (err) {
                 console.error('Failed to fetch children', err);
@@ -57,14 +52,12 @@ export default function CreateTaskScreen() {
         }
 
         try {
-            const token = await AsyncStorage.getItem('token');
             await Promise.all(
                 selectedChildIds.map((idStr) => {
                     const assignedToId = parseInt(idStr, 10);
-                    return axios.post(
-                        `${API_BASE_URL}/tasks`,
-                        { title, description, points: pointsInt, assigned_to_id: assignedToId },
-                        { headers: { Authorization: `Bearer ${token}` } }
+                    return api.post(
+                        `/tasks`,
+                        { title, description, points: pointsInt, assigned_to_id: assignedToId }
                     );
                 })
             );

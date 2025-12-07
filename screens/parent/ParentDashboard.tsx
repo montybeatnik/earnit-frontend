@@ -8,7 +8,6 @@ import {
   ImageBackground,
   Image,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { api } from '../../services/api';
 import { themeStyles, colors } from '../../styles/theme';
@@ -18,6 +17,7 @@ import Modal from 'react-native-modal';
 import { LinearGradient } from 'expo-linear-gradient';
 import useWebSocket from '../../hooks/useWebSocket';
 import { API_BASE_URL } from '@env';
+import { clearSession } from '../../services/session';
 
 const background = require('../../assets/parent-bg.png'); // Add a background image here
 
@@ -49,10 +49,7 @@ export default function ParentDashboardScreen() {
 
   const fetchTasks = async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
-      const res = await api.get(`/tasks?status=${filter}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get(`/tasks?status=${filter}`);
       setTasks(res.data.tasks);
     } catch (err) {
       console.error(err);
@@ -62,10 +59,7 @@ export default function ParentDashboardScreen() {
 
   const fetchParentCode = async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
-      const res = await api.get(`/parent/code`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get(`/parent/code`);
       setParentCode(res.data.code ?? null);
     } catch (err) {
       console.error(err);
@@ -74,10 +68,7 @@ export default function ParentDashboardScreen() {
 
   const handleApproveTask = async (taskId: number) => {
     try {
-      const token = await AsyncStorage.getItem('token');
-      await api.put(`/tasks/${taskId}/approve`, null, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.put(`/tasks/${taskId}/approve`, null);
       Alert.alert('Approved', 'Task has been approved!');
       fetchTasks();
     } catch (err) {
@@ -224,8 +215,12 @@ export default function ParentDashboardScreen() {
               setModalVisible(false);
               navigation.navigate('Rewards');
             }} />
+            <ThemedButton title="Reward Redemptions" onPress={() => {
+              setModalVisible(false);
+              navigation.navigate('Redemptions');
+            }} />
             <ThemedButton title="Log Out" color={colors.danger} onPress={async () => {
-              await AsyncStorage.removeItem('token');
+              await clearSession();
               Alert.alert('Logged out');
               navigation.navigate('Login');
             }} />

@@ -5,7 +5,6 @@ import { View, Text, Pressable, Image, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { api } from '../../services/api';
 import { themeStyles } from '../../styles/theme';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 export default function CompleteTaskScreen({ route, navigation }) {
@@ -34,7 +33,6 @@ export default function CompleteTaskScreen({ route, navigation }) {
     const handleSubmit = async () => {
         setSubmitting(true);
         try {
-            const token = await AsyncStorage.getItem('token');
             const formData = new FormData();
 
 
@@ -49,12 +47,7 @@ export default function CompleteTaskScreen({ route, navigation }) {
 
             console.log('Submitting task with ID:', taskId);
             console.log('Final URL:', `/tasks/${taskId}/submit`);
-            await api.put(`/tasks/${taskId}/submit`, formData, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    // Do NOT manually set Content-Type — axios handles it automatically
-                },
-            });
+            await api.put(`/tasks/${taskId}/submit`, formData);
 
             Alert.alert('✅ Submitted', 'Task marked for approval!');
             navigation.goBack();

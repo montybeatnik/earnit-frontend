@@ -9,7 +9,6 @@ import {
     Easing,
     StyleSheet,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../../services/api';
 import { themeStyles } from '../../styles/theme';
 import DropdownPicker from '../../components/DropdownPicker';
@@ -31,16 +30,14 @@ export default function AssignTaskScreen() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const token = await AsyncStorage.getItem('token');
-                const headers = { Authorization: `Bearer ${token}` };
-
-                const childRes = await api.get('/children', { headers });
+                const childRes = await api.get('/children');
                 setChildren(childRes.data.children);
                 if (childRes.data.children.length === 1) {
-                    setSelectedChildId(childRes.data.children[0].ID);
+                    const onlyChild = childRes.data.children[0];
+                    setSelectedChildId(onlyChild.id ?? onlyChild.ID ?? null);
                 }
 
-                const taskRes = await api.get('/boilerplate/tasks', { headers });
+                const taskRes = await api.get('/boilerplate/tasks');
                 setTasks(taskRes.data.tasks);
             } catch (err) {
                 console.error('Failed to fetch tasks or children:', err);
@@ -75,11 +72,9 @@ export default function AssignTaskScreen() {
         }
 
         try {
-            const token = await AsyncStorage.getItem('token');
             await api.post(
                 '/tasks/assign',
                 { template_id: selectedTaskId, assigned_to_id: selectedChildId },
-                { headers: { Authorization: `Bearer ${token}` } }
             );
 
             triggerAnimation();
@@ -106,10 +101,12 @@ export default function AssignTaskScreen() {
                         <DropdownPicker
                             label="Select Child"
                             selectedValue={selectedChildId}
-                            options={children.map((child) => ({
-                                label: child.name,
-                                value: child.ID,
-                            }))}
+                            options={children
+                                .map((child) => ({
+                                    label: child.name,
+                                    value: child.id ?? child.ID,
+                                }))
+                                .filter((opt) => opt.value != null)}
                             onSelect={setSelectedChildId}
                             visible={childDropdownVisible}
                             setVisible={setChildDropdownVisible}
@@ -119,10 +116,12 @@ export default function AssignTaskScreen() {
                     <DropdownPicker
                         label="Select Task"
                         selectedValue={selectedTaskId}
-                        options={tasks.map((task) => ({
-                            label: task.title,
-                            value: task.id,
-                        }))}
+                        options={tasks
+                            .map((task) => ({
+                                label: task.title,
+                                value: task.id ?? task.ID,
+                            }))
+                            .filter((opt) => opt.value != null)}
                         onSelect={setSelectedTaskId}
                         visible={taskDropdownVisible}
                         setVisible={setTaskDropdownVisible}

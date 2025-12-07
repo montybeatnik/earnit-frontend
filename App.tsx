@@ -4,9 +4,8 @@ import AuthNavigator from './navigation/AuthNavigator';
 import DevFooter from './components/DevFooter';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import { API_BASE_URL } from '@env';
+import { getSession } from './services/session';
+import { api } from './services/api';
 
 declare const __DEV__: boolean;
 
@@ -18,6 +17,12 @@ export default function App() {
   }, []);
 
   async function registerForPushNotifications() {
+    const { token: authToken } = await getSession();
+    if (!authToken) {
+      console.log("ℹ️ Skipping push registration: no active session");
+      return;
+    }
+
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
 
@@ -35,13 +40,10 @@ export default function App() {
     console.log("📱 Expo Push Token:", pushToken);
 
     try {
-      const authToken = await AsyncStorage.getItem("token");
-      await axios.post(`${API_BASE_URL}/push-token`, { token: pushToken }, {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
+      await api.post('/push-token', { token: pushToken });
       console.log("✅ Push token sent to backend");
     } catch (error) {
-      console.error("❌ Failed to send push token:", error.message);
+      console.error("❌ Failed to send push token:", (error as any)?.message);
     }
   }
 

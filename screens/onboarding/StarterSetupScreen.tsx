@@ -2,17 +2,13 @@ import React from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { api } from '../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function StarterSetupScreen() {
     const navigation = useNavigation<any>();
 
     const handleLoadStarterContent = async () => {
-        const token = await AsyncStorage.getItem('token');
         try {
-            await api.post('/setup-starter-content', null, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            await api.post('/setup-starter-content', null);
             navigation.navigate('ParentDashboard'); // or 'ChildDashboard'
         } catch (err) {
             console.error(err);

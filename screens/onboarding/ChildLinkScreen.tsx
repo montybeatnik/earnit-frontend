@@ -7,9 +7,8 @@ import {
     Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { API_BASE_URL } from '@env';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { themeStyles, typography, spacing } from '../../styles/theme';
+import { api } from '../../services/api';
 
 export default function ChildLinkScreen() {
     const [parentCode, setParentCode] = useState('');
@@ -22,17 +21,7 @@ export default function ChildLinkScreen() {
         }
 
         try {
-            const res = await fetch(`${API_BASE_URL}/link-parent`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ parent_code: parentCode }),
-            });
-
-            if (!res.ok) throw new Error('Invalid code');
-
-            const data = await res.json();
+            const { data } = await api.post(`/link-parent`, { parent_code: parentCode });
             const children = data.children;
 
             if (!children || children.length === 0) {

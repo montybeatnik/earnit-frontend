@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, themeStyles, typography } from '../../styles/theme';
 import axios from 'axios';
+import { storeRole } from '../../services/session';
 
 export default function RoleSelectionScreen() {
     const navigation = useNavigation<any>();
@@ -11,7 +11,7 @@ export default function RoleSelectionScreen() {
 
     const selectRole = async (role: 'parent' | 'child') => {
         console.log('Selected role:', role); // <-- Add this
-        await AsyncStorage.setItem('role', role);
+        await storeRole(role);
         if (role === 'parent') {
             navigation.navigate('ParentRegister'); // <-- Must match navigator
         } else {

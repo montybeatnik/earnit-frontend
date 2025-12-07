@@ -1,17 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '@env';
-
-function decodeToken(token: string | null): { user_id?: number; role?: string } | null {
-    try {
-        if (!token) return null;
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        return payload;
-    } catch (e) {
-        console.warn("❌ Failed to decode token:", e);
-        return null;
-    }
-}
+import { decodeJwtPayload, getSession } from '../services/session';
 
 export default function useWebSocket(): string | null {
     const socketRef = useRef<WebSocket | null>(null);
@@ -21,18 +10,21 @@ export default function useWebSocket(): string | null {
         let isMounted = true;
 
         const connect = async () => {
-            const token = await AsyncStorage.getItem('token');
+            const { token } = await getSession();
             if (!token) {
-                console.warn("⚠️ No token found in AsyncStorage");
+                console.warn("⚠️ No token found in SecureStore");
                 return;
             }
 
-            const decoded = decodeToken(token);
+            const decoded = decodeJwtPayload(token);
             console.log("🆔 Decoded user:", decoded);
             const wsUrl = `${API_BASE_URL.replace(/^http/, 'ws')}/ws?token=${token}`;
             console.log("🌐 Connecting to WebSocket:", wsUrl);
 
-            const socket = new WebSocket(wsUrl);
+            // Send the token in the header (primary) while keeping the query for legacy/backward compatibility in dev
+            const socket = new WebSocket(wsUrl, undefined, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
 
             socket.onopen = () => {
                 console.log('✅ WebSocket connected');

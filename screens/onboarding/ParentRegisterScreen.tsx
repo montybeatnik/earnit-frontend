@@ -12,11 +12,11 @@ import {
     TouchableWithoutFeedback,
 } from 'react-native';
 
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { themeStyles, typography, colors, spacing } from '../../styles/theme';
-import { API_BASE_URL } from '@env';
+import { api } from '../../services/api';
+import { storeSession } from '../../services/session';
+import * as SecureStore from 'expo-secure-store';
 
 
 export default function ParentRegisterScreen() {
@@ -27,7 +27,7 @@ export default function ParentRegisterScreen() {
 
     const handleRegister = async () => {
         try {
-            const res = await axios.post(`${API_BASE_URL}/register`, {
+            const res = await api.post(`/register`, {
                 name,
                 email,
                 password,
@@ -36,17 +36,14 @@ export default function ParentRegisterScreen() {
 
             const token = res.data.token;
             if (token) {
-                await AsyncStorage.setItem('token', token);
-                await AsyncStorage.setItem('role', 'parent');
+                await storeSession(token, 'parent');
 
                 // ✅ Fetch and store parent code
-                const parent_code_res = await fetch(`${API_BASE_URL}/parent/code`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                const parent_code_resp = await parent_code_res.json();
+                const parent_code_res = await api.get(`/parent/code`);
+                const parent_code_resp = parent_code_res.data;
 
                 if (parent_code_resp.code) {
-                    await AsyncStorage.setItem('parentCode', parent_code_resp.code);
+                    await SecureStore.setItemAsync('parentCode', parent_code_resp.code);
                     console.log('Stored parent code:', parent_code_resp.code);
                 } else {
                     console.warn('Parent code was null or missing');

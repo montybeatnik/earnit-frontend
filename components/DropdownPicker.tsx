@@ -34,12 +34,16 @@ export default function DropdownPicker({
                     <View style={styles.modalContent}>
                         <FlatList
                             data={options}
-                            keyExtractor={(item) => item.value.toString()}
+                            keyExtractor={(item, idx) =>
+                                item.value != null ? item.value.toString() : `option-${idx}`
+                            }
                             renderItem={({ item }) => (
                                 <Pressable
                                     style={styles.optionItem}
                                     onPress={() => {
-                                        onSelect(item.value);
+                                        if (item.value != null) {
+                                            onSelect(item.value);
+                                        }
                                         setVisible(false);
                                     }}
                                 >

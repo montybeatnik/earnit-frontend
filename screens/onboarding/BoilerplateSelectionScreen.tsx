@@ -6,12 +6,10 @@ import {
     Pressable,
     ActivityIndicator,
 } from 'react-native';
-import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { themeStyles, typography, colors, spacing } from '../../styles/theme';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SelectableCard } from '../../components/SelectableCard';
-import { API_BASE_URL } from '@env';
+import { api } from '../../services/api';
 
 interface TemplateItem {
     id: number;
@@ -31,8 +29,8 @@ export default function BoilerplateSelectionScreen() {
         const fetchTemplates = async () => {
             try {
                 const [taskRes, rewardRes] = await Promise.all([
-                    axios.get(`${API_BASE_URL}/boilerplate/tasks`),
-                    axios.get(`${API_BASE_URL}/boilerplate/rewards`),
+                    api.get(`/boilerplate/tasks`),
+                    api.get(`/boilerplate/rewards`),
                 ]);
                 setTasks(taskRes.data.tasks);
                 setRewards(rewardRes.data.rewards);
@@ -59,21 +57,16 @@ export default function BoilerplateSelectionScreen() {
 
     const handleSubmit = async () => {
         try {
-            const token = await AsyncStorage.getItem('token');
-            const headers = { Authorization: `Bearer ${token}` };
-
-            await axios.post(
-                `${API_BASE_URL}/boilerplate/assign-tasks`,
-                { task_ids: selectedTaskIds },
-                { headers }
+            await api.post(
+                `/boilerplate/assign-tasks`,
+                { task_ids: selectedTaskIds }
             );
 
             console.log("DEBUG: selected reward IDs: ", selectedRewardIds)
 
-            await axios.post(
-                `${API_BASE_URL}/boilerplate/assign-rewards`,
-                { reward_ids: selectedRewardIds },
-                { headers }
+            await api.post(
+                `/boilerplate/assign-rewards`,
+                { reward_ids: selectedRewardIds }
             );
 
             navigation.navigate('ChildSetup' as never);

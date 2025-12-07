@@ -9,11 +9,10 @@ import {
     Platform,
     ScrollView,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
-import { API_BASE_URL } from '@env';
 import { themeStyles } from '../../styles/theme';
+import { api } from '../../services/api';
+import { storeSession } from '../../services/session';
 
 export default function ChildLoginScreen() {
     const [username, setUsername] = useState('');
@@ -22,15 +21,14 @@ export default function ChildLoginScreen() {
 
     const handleLogin = async () => {
         try {
-            const res = await axios.post(`${API_BASE_URL}/child/login`, {
+            const res = await api.post(`/child/login`, {
                 username,
                 password,
             });
 
             const { token } = res.data;
             if (token) {
-                await AsyncStorage.setItem('token', token);
-                await AsyncStorage.setItem('role', 'child');
+                await storeSession(token, 'child');
                 navigation.navigate('Child');
             } else {
                 Alert.alert('Login failed', 'No token received');

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
 import { api } from '../../services/api';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors, spacing, typography, themeStyles } from '../../styles/theme';
+import { decodeJwtPayload, storeSession } from '../../services/session';
 
 export default function RegisterScreen() {
   const navigation = useNavigation<any>();
@@ -40,7 +40,9 @@ export default function RegisterScreen() {
 
       const res = await api.post('/register', payload);
       const token = res.data.token;
-      await AsyncStorage.setItem('token', token);
+      const decoded = decodeJwtPayload(token);
+      const role = decoded?.role || payload.role || 'parent';
+      await storeSession(token, role);
 
       Alert.alert('Success', 'Account created!');
 

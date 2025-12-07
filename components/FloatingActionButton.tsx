@@ -3,6 +3,7 @@ import { View, Text, Pressable, Modal, StyleSheet, Alert } from 'react-native';
 import { colors, themeStyles } from '../styles/theme';
 import ThemedButton from './ThemedButton';
 import { useNavigation } from '@react-navigation/native';
+import { clearSession } from '../services/session';
 
 export default function FloatingActionButton() {
     const [isModalVisible, setModalVisible] = useState(false);
@@ -68,7 +69,7 @@ export default function FloatingActionButton() {
                             title="Log Out"
                             color={colors.danger}
                             onPress={async () => {
-                                await AsyncStorage.removeItem('token');
+                                await clearSession();
                                 setModalVisible(false);
                                 navigation.navigate('Login');
                             }}
