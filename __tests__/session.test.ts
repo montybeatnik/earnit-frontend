@@ -6,6 +6,7 @@ jest.mock('expo-secure-store', () => ({
   setItemAsync: jest.fn(),
   getItemAsync: jest.fn(),
   deleteItemAsync: jest.fn(),
+  isAvailableAsync: jest.fn().mockResolvedValue(true),
   AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY: 'after_first_unlock_this_device_only',
 }));
 
@@ -27,6 +28,7 @@ const sampleToken = [
 
 beforeEach(() => {
   jest.resetAllMocks();
+  mockSecureStore.isAvailableAsync.mockResolvedValue(true);
 });
 
 describe('session helpers', () => {

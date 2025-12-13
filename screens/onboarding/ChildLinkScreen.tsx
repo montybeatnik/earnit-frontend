@@ -21,7 +21,11 @@ export default function ChildLinkScreen() {
         }
 
         try {
-            const { data } = await api.post(`/link-parent`, { parent_code: parentCode });
+            const { data } = await api.post(
+                `/link-parent`,
+                { parent_code: parentCode },
+                { headers: { 'X-Skip-Auth': 'true' }, skipAuth: true }
+            );
             const children = data.children;
 
             if (!children || children.length === 0) {

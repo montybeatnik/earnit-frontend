@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, TextInput, Button, Text, StyleSheet, Alert } from 'react-native';
+import { View, TextInput, Button, Text, StyleSheet, Alert, Pressable, ActivityIndicator } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { api } from '../../services/api';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -11,6 +11,7 @@ export default function RegisterScreen() {
   const route = useRoute();
   const passedEmail = route.params?.email || '';
   const [email, setEmail] = useState(passedEmail);
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
@@ -31,7 +32,13 @@ export default function RegisterScreen() {
   };
 
   const handleRegister = async () => {
+    if (!form.name || !email || !form.password) {
+      Alert.alert('Missing info', 'Please enter name, email, and password.');
+      return;
+    }
+    setLoading(true);
     try {
+      console.log('Register payload', { ...form, email });
       const payload = {
         ...form,
         email,
@@ -52,8 +59,16 @@ export default function RegisterScreen() {
         routes: [{ name: 'Welcome' }],
       });
     } catch (err: any) {
-      console.error(err);
-      Alert.alert('Error', err.response?.data?.error || 'Registration failed');
+      console.error('Register error', err?.message, err?.response?.data);
+      const msg = err.response?.data?.error || err.message || 'Registration failed';
+      if (err.response?.status === 409) {
+        Alert.alert('Account exists', 'This email is already registered. Please log in instead.');
+        navigation.navigate('Login');
+      } else {
+        Alert.alert('Error', msg);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -97,7 +112,26 @@ export default function RegisterScreen() {
           onChangeText={(text) => handleChange('parent_id', text)}
         />
       )}
-      <Button title="Register" onPress={handleRegister} />
+      <Pressable
+        style={[themeStyles.button, { width: '100%', opacity: loading ? 0.7 : 1 }]}
+        onPress={handleRegister}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={themeStyles.buttonText}>Register</Text>
+        )}
+      </Pressable>
+
+      <Pressable
+        style={{ marginTop: spacing.sm }}
+        onPress={() => navigation.navigate('Login')}
+      >
+        <Text style={{ color: colors.primary, textAlign: 'center' }}>
+          Already have an account? Log in
+        </Text>
+      </Pressable>
     </View>
   );
 }

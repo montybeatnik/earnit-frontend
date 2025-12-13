@@ -16,7 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { themeStyles, typography, colors, spacing } from '../../styles/theme';
 import { api } from '../../services/api';
 import { storeSession } from '../../services/session';
-import * as SecureStore from 'expo-secure-store';
+import { storeValue } from '../../services/session';
 
 
 export default function ParentRegisterScreen() {
@@ -43,7 +43,7 @@ export default function ParentRegisterScreen() {
                 const parent_code_resp = parent_code_res.data;
 
                 if (parent_code_resp.code) {
-                    await SecureStore.setItemAsync('parentCode', parent_code_resp.code);
+                    await storeValue('parentCode', parent_code_resp.code);
                     console.log('Stored parent code:', parent_code_resp.code);
                 } else {
                     console.warn('Parent code was null or missing');

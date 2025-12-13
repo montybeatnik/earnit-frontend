@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
 type Nullable<T> = T | null;
 
@@ -12,7 +13,34 @@ export type JwtPayload = {
 const TOKEN_KEY = 'token';
 const ROLE_KEY = 'role';
 
+let secureStoreAvailable: Nullable<boolean> = null;
+
+async function isSecureStoreAvailable(): Promise<boolean> {
+  if (secureStoreAvailable !== null) return secureStoreAvailable;
+  if (Platform.OS === 'web') {
+    secureStoreAvailable = false;
+    return false;
+  }
+  try {
+    const available = SecureStore.isAvailableAsync ? await SecureStore.isAvailableAsync() : false;
+    secureStoreAvailable = Boolean(available && typeof SecureStore.setItemAsync === 'function');
+    if (!secureStoreAvailable) {
+      console.warn('🔐 SecureStore unavailable, using AsyncStorage fallback');
+    }
+    return secureStoreAvailable;
+  } catch (err) {
+    console.warn('🔐 SecureStore availability check failed, falling back', err);
+    secureStoreAvailable = false;
+    return false;
+  }
+}
+
 async function writeSecure(key: string, value: string) {
+  const available = await isSecureStoreAvailable();
+  if (!available) {
+    await AsyncStorage.setItem(key, value);
+    return;
+  }
   try {
     await SecureStore.setItemAsync(key, value, {
       keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
@@ -24,11 +52,14 @@ async function writeSecure(key: string, value: string) {
 }
 
 async function readSecure(key: string): Promise<Nullable<string>> {
-  try {
-    const secureValue = await SecureStore.getItemAsync(key);
-    if (secureValue) return secureValue;
-  } catch (err) {
-    console.warn(`🔐 Failed to read ${key} from SecureStore`, err);
+  const available = await isSecureStoreAvailable();
+  if (available) {
+    try {
+      const secureValue = await SecureStore.getItemAsync(key);
+      if (secureValue) return secureValue;
+    } catch (err) {
+      console.warn(`🔐 Failed to read ${key} from SecureStore`, err);
+    }
   }
 
   // Migrate any legacy AsyncStorage values into SecureStore
@@ -46,10 +77,13 @@ async function readSecure(key: string): Promise<Nullable<string>> {
 }
 
 async function deleteSecure(key: string) {
-  try {
-    await SecureStore.deleteItemAsync(key);
-  } catch (err) {
-    console.warn(`🔐 Failed to delete ${key} from SecureStore`, err);
+  const available = await isSecureStoreAvailable();
+  if (available) {
+    try {
+      await SecureStore.deleteItemAsync(key);
+    } catch (err) {
+      console.warn(`🔐 Failed to delete ${key} from SecureStore`, err);
+    }
   }
 
   try {
@@ -68,6 +102,10 @@ export async function storeSession(token: string, role?: string) {
 
 export async function storeRole(role: string) {
   await writeSecure(ROLE_KEY, role);
+}
+
+export async function storeValue(key: string, value: string) {
+  await writeSecure(key, value);
 }
 
 export async function getSession(): Promise<{ token: Nullable<string>; role: Nullable<string> }> {
