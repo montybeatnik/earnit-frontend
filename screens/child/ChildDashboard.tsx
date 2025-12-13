@@ -103,6 +103,9 @@ export default function ChildDashboard() {
                     <Text style={styles.streakText}>
                       🔥 Streak: {user.current_streak || 0} days (best {user.longest_streak || 0})
                     </Text>
+                    <Text style={styles.moneyText}>
+                      💰 Balance: ${((user.balance_cents || 0) / 100).toFixed(2)}
+                    </Text>
                   </View>
                 </View>
               )}
@@ -233,6 +236,16 @@ export default function ChildDashboard() {
               </Pressable>
 
               <Pressable
+                style={[themeStyles.button, { marginBottom: 12 }]}
+                onPress={() => {
+                  setModalVisible(false);
+                  navigation.navigate('Money');
+                }}
+              >
+                <Text style={themeStyles.buttonText}>💰 My Money</Text>
+              </Pressable>
+
+              <Pressable
                 style={[themeStyles.button, { backgroundColor: '#EF4444' }]}
                 onPress={async () => {
                   await clearSession();
@@ -349,6 +362,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#0F172A',
     fontWeight: '600',
+  },
+  moneyText: {
+    marginTop: 4,
+    fontSize: 14,
+    color: '#047857',
+    fontWeight: '700',
   },
   taskCard: {
     backgroundColor: '#F0F9FF',

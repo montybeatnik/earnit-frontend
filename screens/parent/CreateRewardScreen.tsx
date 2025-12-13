@@ -23,6 +23,7 @@ export default function CreateRewardScreen() {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [cost, setCost] = useState('');
+    const [cashCost, setCashCost] = useState('');
     const [type, setType] = useState<'tangible' | 'investment' | 'screen_time'>('tangible');
     const [ticker, setTicker] = useState('');
     const [amount, setAmount] = useState('');
@@ -35,6 +36,8 @@ export default function CreateRewardScreen() {
             return;
         }
 
+        const cashCostCents = cashCost ? Math.round(parseFloat(cashCost) * 100) : 0;
+
         try {
             await api.post(
                 '/rewards',
@@ -43,6 +46,7 @@ export default function CreateRewardScreen() {
                     description,
                     cost: parseInt(cost),
                     type,
+                    cash_cost_cents: cashCostCents,
                     meta:
                         type === 'investment'
                             ? { ticker, amount: Number(amount) || 0 }
@@ -138,6 +142,13 @@ export default function CreateRewardScreen() {
                             value={cost}
                             onChangeText={setCost}
                             keyboardType="numeric"
+                            style={themeStyles.input}
+                        />
+                        <TextInput
+                            placeholder="Cash cost (optional, e.g., 2.50)"
+                            value={cashCost}
+                            onChangeText={setCashCost}
+                            keyboardType="decimal-pad"
                             style={themeStyles.input}
                         />
 

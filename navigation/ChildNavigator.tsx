@@ -7,6 +7,7 @@ import RewardCelebrationScreen from '../screens/child/RewardCelebrationScreen';
 import CompleteTaskScreen from '../screens/child/CompleteTaskScreen'
 import MyRewardsScreen from '../screens/child/MyRewardsScreen';
 import WeeklyRetroScreen from '../screens/child/WeeklyRetroScreen';
+import MoneyScreen from '../screens/child/MoneyScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -24,6 +25,7 @@ export default function ChildNavigator() {
             />
             <Stack.Screen name="MyRewards" component={MyRewardsScreen} />
             <Stack.Screen name="WeeklyRetro" component={WeeklyRetroScreen} />
+            <Stack.Screen name="Money" component={MoneyScreen} />
         </Stack.Navigator>
     );
 }

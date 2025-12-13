@@ -17,6 +17,7 @@ export default function CreateTaskScreen() {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [points, setPoints] = useState('');
+    const [cashAmount, setCashAmount] = useState('');
     const [children, setChildren] = useState([]);
     const [selectedChildIds, setSelectedChildIds] = useState<string[]>([]);
     const navigation = useNavigation<any>();
@@ -46,6 +47,7 @@ export default function CreateTaskScreen() {
 
     const handleCreate = async () => {
         const pointsInt = parseInt(points, 10);
+        const cashCents = cashAmount ? Math.round(parseFloat(cashAmount) * 100) : 0;
         if (!title || !description || isNaN(pointsInt) || selectedChildIds.length === 0) {
             Alert.alert('Missing fields', 'Please fill out all fields correctly.');
             return;
@@ -57,7 +59,7 @@ export default function CreateTaskScreen() {
                     const assignedToId = parseInt(idStr, 10);
                     return api.post(
                         `/tasks`,
-                        { title, description, points: pointsInt, assigned_to_id: assignedToId }
+                        { title, description, points: pointsInt, assigned_to_id: assignedToId, cash_value_cents: cashCents }
                     );
                 })
             );
@@ -66,6 +68,7 @@ export default function CreateTaskScreen() {
             setTitle('');
             setDescription('');
             setPoints('');
+            setCashAmount('');
             setSelectedChildIds([]);
         } catch (err) {
             console.error('Task creation error:', err);
@@ -97,6 +100,14 @@ export default function CreateTaskScreen() {
                     value={points}
                     onChangeText={setPoints}
                     keyboardType="numeric"
+                    style={themeStyles.input}
+                />
+
+                <TextInput
+                    placeholder="Cash amount (optional, e.g., 5.00)"
+                    value={cashAmount}
+                    onChangeText={setCashAmount}
+                    keyboardType="decimal-pad"
                     style={themeStyles.input}
                 />
 

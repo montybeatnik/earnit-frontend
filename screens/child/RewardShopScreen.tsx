@@ -107,6 +107,11 @@ export default function RewardShopScreen() {
                             </View>
                             <Text style={styles.description}>{item.description}</Text>
                             <Text style={styles.cost}>Cost: {item.cost} pts</Text>
+                            {item.cash_cost_cents ? (
+                                <Text style={styles.small}>
+                                    Cash cost: ${(item.cash_cost_cents / 100).toFixed(2)}
+                                </Text>
+                            ) : null}
                             {item.type === 'investment' && (
                                 <Text style={styles.small}>
                                     Investment: {item.meta?.ticker || 'N/A'} • ${item.meta?.amount || 0}
